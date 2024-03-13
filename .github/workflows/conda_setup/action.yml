@@ -1,0 +1,32 @@
+name: "Conda Setup"
+description: "sets up conda environment from environment.yml file"
+
+inputs:
+  env_name:
+    description: "name of the env to activate"
+    required: true
+  env_file_path:
+    description: "path to environment.yml file"
+    required: true
+  python_version:
+    description: "python version to use in environment"
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Conda with Python ${{ inputs.python_version }} and dependencies
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        auto-update-conda: true
+        conda-solver: libmamba
+        activate-environment: ${{ inputs.env_name }}
+        environment-file: ${{ inputs.env_file_path }}
+        python-version: ${{ inputs.python_version }}
+        auto-activate-base: True
+
+    - name: Print Conda Information
+      shell: bash -l {0}
+      run: |
+        conda info
+        conda list
