@@ -59,7 +59,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create Release
+      - name: Create latest Release
         uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
