@@ -33,10 +33,10 @@ class Raspi40PinBarRPi(GPIOPinBar):
             GPIOPinMode.OUT: GPIO.OUT,
         }
         self._mode_to_rpi_pull_up_down: dict[GPIOPinMode, Optional[bool]] = {
-            GPIOPinMode.IN: None,
+            GPIOPinMode.IN: GPIO.PUD_OFF,
             GPIOPinMode.IN_PULL_DOWN: GPIO.PUD_DOWN,
             GPIOPinMode.IN_PULL_UP: GPIO.PUD_UP,
-            GPIOPinMode.OUT: None,
+            GPIOPinMode.OUT: GPIO.PUD_OFF,
         }
         self._rpi_state_to_state_mapping: dict[int, GPIOPinState] = {
             GPIO.HIGH: GPIOPinState.HIGH,
@@ -70,7 +70,7 @@ class Raspi40PinBarRPi(GPIOPinBar):
 
     def _gpio_pin_states_iterator(self, pins: List[_GPIOPin]) -> Iterator[Optional[GPIOPinState]]:
         channel_ids = [pin.idx for pin in pins]
-        states: List[int] = GPIO.input(channel_ids)
+        states: List[int] = [GPIO.input(idx) for idx in channel_ids]
         states: List[GPIOPinState] = [self._rpi_state_to_state_mapping[state] for state in states]
 
         return iter(states)

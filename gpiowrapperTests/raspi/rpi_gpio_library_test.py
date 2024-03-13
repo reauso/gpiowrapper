@@ -178,7 +178,7 @@ class Raspi40PinBarRPiTests(unittest.TestCase):
         # Assert
         expected_calls = [
             call(0, GPIO.IN, pull_up_down=GPIO.PUD_UP),
-            call(1, GPIO.IN, pull_up_down=None),
+            call(1, GPIO.IN, pull_up_down=GPIO.PUD_OFF),
             call(2, GPIO.IN, pull_up_down=GPIO.PUD_DOWN),
         ]
         setup_mock.assert_has_calls(expected_calls)
@@ -212,13 +212,15 @@ class Raspi40PinBarRPiTests(unittest.TestCase):
             _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
             _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
-        input_mock.return_value = [GPIO.HIGH, GPIO.HIGH, GPIO.LOW]
+        input_mock.side_effect = [GPIO.HIGH, GPIO.HIGH, GPIO.LOW]
 
         # Act
         _ = bar._gpio_pin_states_iterator(pins=pins)
 
         # Assert
-        input_mock.assert_called_once_with([0, 1, 2])
+        expected_calls = [call(i) for i in range(3)]
+        input_mock.assert_has_calls(expected_calls)
+        self.assertEqual(len(expected_calls), input_mock.call_count)
 
     def test_gpio_pin_states_iterator__Always__ReturnsIteratorIteratingCorrectGPIOPinStates(self):
         # Arrange
@@ -230,7 +232,7 @@ class Raspi40PinBarRPiTests(unittest.TestCase):
             _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
             _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
-        input_mock.return_value = [GPIO.HIGH, GPIO.HIGH, GPIO.LOW]
+        input_mock.side_effect = [GPIO.HIGH, GPIO.HIGH, GPIO.LOW]
 
         # Act
         states_it = bar._gpio_pin_states_iterator(pins=pins)
