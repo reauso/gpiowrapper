@@ -37,6 +37,7 @@ jobs:
         if: ${{ always() }}
 
       - name: Build
+        shell: bash -l {0}
         run: |
           conda activate gpiowrapper
           pip install build
