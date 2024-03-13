@@ -1,0 +1,50 @@
+name: "latest-release"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  automated-latest-release:
+    name: "Latest Release"
+    runs-on: "ubuntu-latest"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Conda For Testing
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: gpiowrapper
+          environment-file: testing_environment.yml
+          python-version: ${{ matrix.python-version }}
+          auto-activate-base: True
+
+      - name: Test with pytest
+        shell: bash -l {0}
+        run: |
+          pytest --junitxml=junit/test-results-${{ matrix.os }}-${{ matrix.python-version }}.xml
+
+      - name: Upload pytest test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results-${{ matrix.os }}-${{ matrix.python-version }}
+          path: junit/test-results-${{ matrix.os }}-${{ matrix.python-version }}.xml
+        # Use always() to always run this step to publish test results when there are test failures
+        if: ${{ always() }}
+
+      - name: Build
+        run: |
+          pip install build
+          python -m build
+
+#      - name: Create Release
+#        uses: marvinpinto/action-automatic-releases@latest
+#        with:
+#          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+#          automatic_release_tag: "latest"
+#          prerelease: true
+#          files: |
+#            LICENSE
