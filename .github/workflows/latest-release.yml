@@ -1,4 +1,4 @@
-name: "Main Push Or PullRequest"
+name: "Release Latest"
 
 on:
   push:
@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: ./conda-setup@v1
+      - uses: ./.github/conda-setup@v1
 
       - name: Test with pytest
         shell: bash -l {0}
