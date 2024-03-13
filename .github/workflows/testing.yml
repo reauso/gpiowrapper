@@ -22,6 +22,8 @@ jobs:
       - name: Set up Conda with Python ${{ matrix.python-version }} and dependencies
         uses: conda-incubator/setup-miniconda@v3
         with:
+          auto-update-conda: true
+          conda-solver: libmamba
           activate-environment: gpiowrapper
           environment-file: testing_environment.yml
           python-version: ${{ matrix.python-version }}
