@@ -49,6 +49,7 @@ jobs:
       - name: Build
         shell: bash -l {0}
         run: |
+          conda init
           conda activate gpiowrapper
           pip install build
           python -m build
