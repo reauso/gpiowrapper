@@ -40,11 +40,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/my_actions/conda-setup
-        with:
-          env_name: gpiowrapper
-          env_file_path: testing_environment.yml
-          python_version: 3.11
+#      - uses: ./.github/my_actions/conda-setup
+#        with:
+#          env_name: gpiowrapper
+#          env_file_path: testing_environment.yml
+#          python_version: 3.11
 
       - name: Build
         shell: bash -l {0}
