@@ -5,7 +5,7 @@ from pathlib import Path
 from setuptools import setup, find_packages
 
 if sys.version_info < (3, 11):
-    print('requires at least Python 3.11 to run.')
+    print(f'requires at least Python 3.11 to run, got version info:\n {sys.version_info}')
     sys.exit(1)
 
 with open(Path('gpiowrapper', '__init__.py'), encoding='utf-8') as f:
