@@ -15,6 +15,12 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Edit testing_environment.yml file
+      if: "${{ github.event.inputs.python_version != '' }}"
+      shell: bash -l {0}
+      run: |
+        sed -i 's/  - python=${{ inputs.python_version }}//' ${{ inputs.env_file_path }}
+
     - name: Set up Conda with Python ${{ inputs.python_version }} and dependencies
       uses: conda-incubator/setup-miniconda@v3
       with:
