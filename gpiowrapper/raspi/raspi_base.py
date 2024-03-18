@@ -4,11 +4,14 @@ from dataclasses import dataclass
 from gpiowrapper.base import PinType, GPIOPinBarEmulator, PinAddressing
 
 
-@dataclass(frozen=True)
+@dataclass
 class Raspi40PinBarData:
-    # from https://www.raspberrypi.com/documentation/computers/raspberry-pi.html
-    # and https://www.raspberrypi.com/documentation/computers/images/GPIO-Pinout-Diagram-2.png
-    # (Last revisited 05.03.2024)
+    """
+    PinBar constructor data for a 40 pins Raspberry pin bar.
+    from https://www.raspberrypi.com/documentation/computers/raspberry-pi.html
+    and https://www.raspberrypi.com/documentation/computers/images/GPIO-Pinout-Diagram-2.png
+    (Last revisited 05.03.2024)
+    """
 
     @staticmethod
     def pin_assignment():
@@ -42,7 +45,15 @@ class Raspi40PinBarData:
 
 
 class Raspi40PinBarEmulator(GPIOPinBarEmulator):
+    """
+    An emulator for a 40 pin Raspberry pin bar. Supports all functionality of a GPIOPinBarEmulator.
+    """
+
     def __init__(self, initial_addressing: PinAddressing):
+        """
+        Creates a new instance of an emulator for a 40 pin Raspberry pin bar.
+        :param initial_addressing: Determines which pins are addressed for given indices.
+        """
         super().__init__(
             pin_assignment=Raspi40PinBarData.pin_assignment(),
             initial_addressing=initial_addressing,

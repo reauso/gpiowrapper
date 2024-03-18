@@ -7,7 +7,6 @@ from ..util import RequiresOptionalImport
 try:
     import RPi.GPIO as GPIO
     GPIO.setmode(GPIO.BOARD)
-    # GPIO.setwarnings(False)
 except RuntimeError as e:
     print("Error importing RPi.GPIO! This is probably because you need superuser privileges.  "
           "You can achieve this by using 'sudo' to run your script")
@@ -18,7 +17,16 @@ except ModuleNotFoundError as e:
 
 @RequiresOptionalImport(import_='RPi.GPIO', as_='GPIO')
 class Raspi40PinBarRPi(GPIOPinBar):
+    """
+    Implementation of a 40 pin Raspberry pin bar based on the RPi.GPIO library.
+    Note that this class needs the RPi.GPIO library to be imported during runtime.
+    """
+
     def __init__(self, initial_addressing: PinAddressing):
+        """
+        Creates a new instance of a 40 pin Raspberry pin bar using the RPi.GPIO library to communicate with the pi.
+        :param initial_addressing: Determines which pins are addressed for given indices.
+        """
         super().__init__(
             pin_assignment=Raspi40PinBarData.pin_assignment(),
             initial_addressing=initial_addressing,
@@ -26,6 +34,8 @@ class Raspi40PinBarRPi(GPIOPinBar):
             gpio_order_from_ids=Raspi40PinBarData.gpio_orders_from_ids(),
             gpio_idx_offset=Raspi40PinBarData.gpio_idx_offset(),
         )
+
+        # mappings between rpi library and wrapper library
         self._mode_to_rpi_mode_mapping: dict[GPIOPinMode, int] = {
             GPIOPinMode.IN: GPIO.IN,
             GPIOPinMode.IN_PULL_DOWN: GPIO.IN,
@@ -80,5 +90,5 @@ class Raspi40PinBarRPi(GPIOPinBar):
         states: List[int] = [self._state_to_rpi_state_mapping[state] for state in new_states]
         GPIO.output(channel_ids, states)
 
-    def __del__(self):
+    def __del__(self) -> None:
         GPIO.cleanup()

@@ -295,68 +295,42 @@ class AddOffsetToSliceTests(unittest.TestCase):
         # Assert
         self.assertEqual(new_item, item)
 
-    def test_add_offset_to_slice__AllHigherThanOffset__ReturnsOffsetSubtracted(self):
+    @parameterized.expand([
+        [slice(6, 10, 2), slice(1, 5, 2)],
+        [slice(4, 10, 1), slice(0, 5, 1)],
+        [slice(2, 4, 1), slice(0, 0, 1)],
+        [slice(16, 10, -1), slice(11, 5, -1)],
+        [slice(-14, -12, 1), slice(-19, -17, 1)],
+        [slice(-14, -2, 3), slice(-19, -7, 3)],
+        [slice(-4, -2, 1), slice(-9, -7, 1)],
+        [slice(-6, -10, -1), slice(-11, -15, -1)],
+    ])
+    def test_add_offset_to_slice__WithPositiveOffset__ReturnsExpected(self, item, expected):
         # Arrange
-        item = slice(6, 30, 1)
         offset = 5
 
         # Act
         new_item = subtract_offset_from_slice(item=item, offset=offset)
 
         # Assert
-        self.assertEqual(new_item, slice(1, 25, 1))
+        self.assertEqual(new_item, expected)
 
-    def test_add_offset_to_slice__StartLowerThanOffset__ReturnsStartZero(self):
+    @parameterized.expand([
+        [slice(6, 10, 2), slice(11, 15, 2)],
+        [slice(4, 10, 1), slice(9, 15, 1)],
+        [slice(2, 4, 1), slice(7, 9, 1)],
+        [slice(16, 10, -1), slice(21, 15, -1)],
+        [slice(-14, -12, 1), slice(-9, -7, 1)],
+        [slice(-14, -2, 3), slice(-9, sys.maxsize, 3)],
+        [slice(-4, -2, 1), slice(sys.maxsize, sys.maxsize, 1)],
+        [slice(-6, -10, -1), slice(-1, -5, -1)],
+    ])
+    def test_add_offset_to_slice__WithNegativeOffset__ReturnsExpected(self, item, expected):
         # Arrange
-        item = slice(3, 30, 1)
-        offset = 5
+        offset = -5
 
         # Act
         new_item = subtract_offset_from_slice(item=item, offset=offset)
 
         # Assert
-        self.assertEqual(new_item, slice(0, 25, 1))
-
-    def test_add_offset_to_slice__StartStopLowerThanOffset__ReturnsStartStopZero(self):
-        # Arrange
-        item = slice(1, 4, 1)
-        offset = 5
-
-        # Act
-        new_item = subtract_offset_from_slice(item=item, offset=offset)
-
-        # Assert
-        self.assertEqual(new_item, slice(0, 0, 1))
-
-    def test_iadd_offset_to_slice__NegativeStart__ReturnsStartUnchanged(self):
-        # Arrange
-        item = slice(-1, 30, 1)
-        offset = 5
-
-        # Act
-        new_item = subtract_offset_from_slice(item=item, offset=offset)
-
-        # Assert
-        self.assertEqual(new_item, slice(-1, 25, 1))
-
-    def test_add_offset_to_slice__NegativeStop__ReturnsStopUnchanged(self):
-        # Arrange
-        item = slice(6, -5, 1)
-        offset = 5
-
-        # Act
-        new_item = subtract_offset_from_slice(item=item, offset=offset)
-
-        # Assert
-        self.assertEqual(new_item, slice(1, -5, 1))
-
-    def test_add_offset_to_slice__NegativeStartStop__ReturnsUnchanged(self):
-        # Arrange
-        item = slice(-6, -5, 1)
-        offset = 5
-
-        # Act
-        new_item = subtract_offset_from_slice(item=item, offset=offset)
-
-        # Assert
-        self.assertEqual(new_item, slice(-6, -5, 1))
+        self.assertEqual(new_item, expected)

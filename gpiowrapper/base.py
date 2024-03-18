@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, unique
 from operator import itemgetter
@@ -9,30 +8,32 @@ from typing import List, Union, Optional, Any, Iterable, Iterator
 from gpiowrapper.util import IndexableProperty, replace_none_in_slice, subtract_offset_from_slice
 
 
-# TODO doc
-
-
 @unique
 class PinAddressing(Enum):
+    """
+    The pin addressing determines which pin is addressed for a given index.
+
+    - In PinBar mode, the index matches the pin id on the pin bar assignment.
+      E.g. if you want to address the pin in the upper left corner you can use the lowest id as
+      index assuming that the assignment of the pin ids starts in that corner.
+    - In GPIO mode, the index matches the individual gpio pin id enumeration.
+      When using this mode you can only address pins of type GPIO.
+      E.g. if the 12th pin of the pin bar is labeled as GPIO_0, then you can use the index zero to
+      address that pin.
+    """
     PinBar = 'PinBar'
+    """
+    In PinBar mode, the index matches the pin id on the pin bar assignment. E.g. if you want to address the
+    pin in the upper left corner you can use the lowest id as index assuming that the assignment of the pin ids 
+    starts in that corner.
+    """
     GPIO = 'GPIO'
-
-    def __str__(self):
-        return self.value
-
-
-@unique
-class GPIOLibrary(Enum):
-    Emulator = 'Emulator'
-    RPi_GPIO = 'RPi_GPIO'
-
-    def __str__(self):
-        return self.value
-
-
-@unique
-class GPIOBoardType(Enum):
-    RASPI_40_PIN = 'RASPI_40_PIN'
+    """
+    In GPIO mode, the index matches the individual gpio pin id enumeration. 
+    When using this mode you can only address pins of type GPIO. 
+    E.g. if the 12th pin of the pin bar is labeled as GPIO_0, then you can use the index zero to 
+    address that pin.   
+    """
 
     def __str__(self):
         return self.value
@@ -40,37 +41,99 @@ class GPIOBoardType(Enum):
 
 @unique
 class PinType(Enum):
+    """
+    An enumeration of types for pins of a pin bar.
+    Entries are:
+
+    - POWER typed pins are responsible for constant power supply.
+    - GROUND typed pins can be used to close electronic circuits.
+    - GPIO typed pins are general purpose input output pins which are controllable and can be used
+      for several kinds of applications.
+    - OTHER typed pins with functionality not listed in this enumeration.
+    """
+
     POWER = 0
+    """ POWER typed pins are responsible for constant power supply. """
     GROUND = 1
+    """ GROUND typed pins can be used to close electronic circuits. """
     GPIO = 2
+    """
+    GPIO typed pins are general purpose input output pins which are controllable and can be used
+    for several kinds of applications.
+    """
     OTHER = 3
+    """ OTHER typed pins with functionality not listed in this enumeration. """
 
 
 @unique
 class GPIOPinState(Enum):
+    """
+    Possible gpio pin states.
+    Note that this enumeration can only represent discrete values and therefore is incomplete.
+    Values are:
+
+    - LOW state represents a voltage-free pin state.
+    - HIGH state represents a voltage-high pin state.
+    """
     LOW = 0
+    """ LOW state represents a voltage-free pin state. """
     HIGH = 1
+    """ HIGH state represents a voltage-high pin state. """
 
 
 @unique
 class GPIOPinMode(Enum):
+    """
+    The Mode of a gpio pin.
+    Note that not an implementation may not support all listed modes for a gpio pin.
+    Possible modes are:
+
+    - OFF: represents an unused gpio pin.
+    - IN: represents an input gpio pin. Note that there is no inbuilt pull down or pull up resistor interposed.
+    - IN_PULL_DOWN: represents an input gpio pin with inbuilt pull down resistor. So the default state of a pin in
+      this mode is LOW.
+    - IN_PULL_UP: represents an input gpio pin with inbuilt pull up resistor. So the default state of a pin in
+      this mode is HIGH.
+    - OUT: represents an output gpio pin. Note that there is no inbuilt pull down or pull up resistor interposed.
+    """
     OFF = 0
+    """ represents an unused gpio pin. """
     IN = 1
+    """ represents an input gpio pin. Note that there is no inbuilt pull down or pull up resistor interposed. """
     IN_PULL_DOWN = 2
+    """
+    represents an input gpio pin with inbuilt pull down resistor. So the default state of a pin in this mode is LOW.
+    """
     IN_PULL_UP = 3
+    """
+    represents an input gpio pin with inbuilt pull up resistor. So the default state of a pin in this mode is HIGH.
+    """
     OUT = 4
+    """ represents an output gpio pin. Note that there is no inbuilt pull down or pull up resistor interposed. """
 
 
 @dataclass(slots=True, kw_only=True)
 class _Pin:
+    """
+    Dataclass to store pin data.
+    """
+
     idx: int
+    """ The id of the pin on the pin bar. """
     type: PinType
+    """ The type of the pin. """
 
 
 @dataclass(slots=True, kw_only=True)
 class _GPIOPin(_Pin):
+    """
+    Dataclass to additionally store gpio pin data.
+    """
+
     gpio_idx: int
+    """ The gpio id of the pin. Depends on the individual gpio pin enumeration. """
     mode: GPIOPinMode = GPIOPinMode.OFF
+    """ The current mode of the gpio pin. """
 
 
 class PinBarError(Exception):
@@ -108,23 +171,47 @@ class ModeIsOffError(GPIOPinBarError):
 
 
 class PinBar(ABC):
+    """
+    An abstract base class representing an electronic pin bar with zero to several pins.
+    """
+
     def __init__(self, pin_assignment: List[PinType], idx_offset: int = 0):
+        """
+        Creates a new PinBar object.
+
+        :param pin_assignment: The pin assignment list contains each pin's type.
+          The list is ordered by the pin id on the pin bar starting with the lowest id.
+        :param idx_offset: The id starting offset on the pin bar. This value matches the lowest existing pin bar id.
+          E.g. the first pin has the id 1 on the pin bar, then this parameter needs to be 1 too.
+        """
         self._pins: List[_Pin] = [_Pin(idx=i + idx_offset, type=type) for i, type in enumerate(pin_assignment)]
         self._idx_offset: int = idx_offset
 
     @property
     def pin_assignment(self) -> List[PinType]:
+        """
+        Gets the pin assignment of this pin bar object as list.
+
+        Note that a change to this list will NOT change the pin assignment of this object.
+        To change the pin assignment you need to create a new pin bar object.
+        """
         return [pin.type for pin in self._pins]
 
     @property
     def idx_offset(self) -> int:
+        """ Gets the id starting offset of this pin bar object. This value matches the lowest pin id. """
         return self._idx_offset
 
     def __len__(self) -> int:
+        """ Gets the total number of pins for this pin bar. This includes any pin type. """
         return len(self._pins)
 
 
 class GPIOPinBar(PinBar, ABC):
+    """
+    An abstract base class representing an electronic pin bar with zero to several pins which provides
+    functionality for gpio pins.
+    """
 
     def __init__(
             self,
@@ -134,6 +221,20 @@ class GPIOPinBar(PinBar, ABC):
             gpio_order_from_ids: List[int] = None,
             gpio_idx_offset: int = 0
     ):
+        """
+        Creates a new GPIOPinBar object that provides functionality for gpio pins.
+
+        :param pin_assignment: The pin assignment list contains each pin's type.
+          The list is ordered by the pin id on the pin bar starting with the lowest id.
+        :param initial_addressing: Determines which pins are addressed for given indices.
+        :param idx_offset: The id starting offset on the pin bar. This value matches the lowest existing pin bar id.
+          E.g. the first pin has the id 1 on the pin bar, then this parameter needs to be 1 too.
+        :param gpio_order_from_ids: A list of integers that determines the gpio id enumeration.
+          The list is ordered by the gpio id starting with the lowest gpio id and contains the pin bar ids.
+          E.g. Pin 27 on the pin bar is labeled as GPIO_0, then the first entry of this list needs to be 27.
+        :param gpio_idx_offset: The gpio id starting offset of the individual gpio enumeration.
+          This value matches the lowest existing gpio id.
+        """
         super().__init__(pin_assignment=pin_assignment, idx_offset=idx_offset)
         self._gpio_idx_offset: int = gpio_idx_offset
 
@@ -141,40 +242,61 @@ class GPIOPinBar(PinBar, ABC):
         self._gpio_pins: List[_GPIOPin] = [pin for pin in self._pins if isinstance(pin, _GPIOPin)]
         self._gpio_pins.sort(key=lambda x: x.gpio_idx)
 
+        # TODO add index and value validator attributes to allow for dynamic validation through subclassing
+
         self.addressing = initial_addressing
 
-    def _convert_gpio_types_in_pins_list(self, gpio_order_from_ids):
+    def _convert_gpio_types_in_pins_list(self, gpio_order_from_ids) -> None:
+        """
+        Converts pins of type gpio into GPIOPin dataclass objects.
+        :param gpio_order_from_ids: see __init__ params.
+        """
         gpio_pin_indices = [i for i, pin in enumerate(self._pins) if pin.type is PinType.GPIO]
-        gpio_order_indices = [i - self._idx_offset for i in
-                              gpio_order_from_ids] if gpio_order_from_ids is not None else None
+        gpio_order_indices = gpio_pin_indices
 
-        if gpio_order_indices is not None and not sorted(gpio_order_indices) == gpio_pin_indices:
+        if gpio_order_from_ids is not None:
+            gpio_order_indices = [i - self._idx_offset for i in gpio_order_from_ids]
+
+        if not sorted(gpio_order_indices) == gpio_pin_indices:
             raise ValueError(f'gpio_order_from_ids parameter is invalid! '
                              'Check if you are missing a gpio pin or have duplicates.')
 
-        order = gpio_pin_indices if gpio_order_indices is None else gpio_order_indices
-        for i, index in enumerate(order):
+        for i, index in enumerate(gpio_order_indices):
             pin = self._pins[index]
-            self._pins[index] = _GPIOPin(idx=pin.idx, type=PinType.GPIO,
-                                         gpio_idx=i + self._gpio_idx_offset, mode=GPIOPinMode.OFF)
+            self._pins[index] = _GPIOPin(
+                idx=pin.idx,
+                type=PinType.GPIO,
+                gpio_idx=i + self._gpio_idx_offset,
+                mode=GPIOPinMode.OFF
+            )
 
     @property
     def gpio_idx_offset(self) -> int:
+        """
+        Gets the gpio id starting offset of this gpio pin bar object.
+        This value matches the lowest gpio pin gpio id.
+        See PinAddressing.GPIO for more information of the different pin id spaces.
+        """
         return self._gpio_idx_offset
 
     @property
     def num_gpio_pins(self) -> int:
-        """
-        :return: The number of GPIO Pins
-        """
+        """ Gets the total number of GPIO Pins. """
         return len(self._gpio_pins)
 
     @property
     def addressing(self) -> PinAddressing:
+        """
+        Gets the current pin addressing mode of this pin bar.
+        """
         return self._addressing
 
     @addressing.setter
-    def addressing(self, new_addressing: PinAddressing):
+    def addressing(self, new_addressing: PinAddressing) -> None:
+        """
+        Sets the pin addressing mode of this pin bar. Allowed addressing modes are PinBar and GPIO.
+        :param new_addressing: The new addressing mode.
+        """
         if new_addressing not in [PinAddressing.PinBar, PinAddressing.GPIO]:
             raise ValueError(f'{new_addressing} is not supported!')
 
@@ -200,6 +322,8 @@ class GPIOPinBar(PinBar, ABC):
         return self._addressing_array_length
 
     class _IndexValidator:
+        """ Validator for index items that validates valid types and values. """
+
         @classmethod
         def _validation_mapping(cls) -> dict:
             return {
@@ -214,8 +338,15 @@ class GPIOPinBar(PinBar, ABC):
                 item: Any,
                 offset: int,
                 length: int,
-                addressing: PinAddressing
-        ):
+                addressing: PinAddressing  # TODO change to GPIOPinBar object
+        ) -> None:
+            """
+            Validates both type and value of the given item as index.
+            :param item: The index item.
+            :param offset: The current offset. Depends on the current pin addressing used.
+            :param length: The length of the pin array. Depends on the current pin addressing used.
+            :param addressing: The current pin addressing used.
+            """
             cls.validate_index_type(type(item))
             validation_func = cls._validation_mapping()[type(item)]
 
@@ -225,6 +356,7 @@ class GPIOPinBar(PinBar, ABC):
 
         @classmethod
         def validate_index_type(cls, item_type):
+            """ Validates the type of the index item. """
             if item_type not in [int, slice, list]:
                 raise TypeError(f'index must be integer, slice or list, not {item_type.__name__}')
 
@@ -257,8 +389,12 @@ class GPIOPinBar(PinBar, ABC):
                                     f'Found type {type(index).__name__} at position {i}')
 
     class _ValueValidator(ABC):
+        """
+        Abstract base class to validate values set for the gpio pin attributes.
+        """
         @classmethod
         def _validation_mapping(cls):
+            """ Gets the validation method for each index type. """
             return {
                 int: cls._validate_for_int_index,
                 slice: cls._validate_for_slice_index,
@@ -267,6 +403,12 @@ class GPIOPinBar(PinBar, ABC):
 
         @classmethod
         def validate(cls, value, index_type, considered_pins: List[_Pin]):
+            """
+            Validates both type and value of the given value.
+            :param value: The value to validate.
+            :param index_type: The index type used to address the list.
+            :param considered_pins: A list of the considered pins of the current operation.
+            """
             cls._validate_type(type(value))
 
             validation_func = cls._validation_mapping()[index_type]
@@ -277,33 +419,45 @@ class GPIOPinBar(PinBar, ABC):
         @classmethod
         @abstractmethod
         def _validate_type(cls, value_type):
+            """ Validates the type of the value. """
             pass
 
         @classmethod
         def _validate_for_int_index(cls, value, **_):
+            """ Validates the value for an int index. """
             if isinstance(value, list):
                 raise ValueError('setting an array element with a sequence.')
 
         @classmethod
         def _validate_for_slice_index(cls, value, considered_pins: List[_Pin], **_):
+            """ Validates the value for a slice index. """
             if isinstance(value, list):
                 cls._validate_list_size(considered_pins, value)
                 cls._validate_list_entries(value, considered_pins, none_allowed=True)
 
         @classmethod
         def _validate_for_list_index(cls, value, considered_pins: List[_Pin], **_):
+            """ Validates the value for a list index. """
             if isinstance(value, list):
                 cls._validate_list_size(considered_pins, value)
                 cls._validate_list_entries(value, considered_pins, none_allowed=False)
 
         @classmethod
         def _validate_list_size(cls, considered_pins, value):
+            """ Validates that the number of values and the number of considered pins are the same. """
             if len(value) is not len(considered_pins):
                 raise ValueError(
                     f'could not broadcast input array from size {len(value)} into size {len(considered_pins)}')
 
         @classmethod
-        def _validate_list_entries(cls, value, considered_pins: List[_Pin], none_allowed: bool):
+        def _validate_list_entries(cls, value, considered_pins: List[_Pin], none_allowed: bool) -> None:
+            """
+            Validates that the value list entries are valid for each individual pin type of the
+            considered pins.
+            :param value: The list of values to validate.
+            :param considered_pins: The considered pins by this operation.
+            :param none_allowed: If None values are allowed or not.
+            """
             value_pin_zip = zip(value, considered_pins)
             allowed_entry_types = cls._allowed_list_entry_types()
             if none_allowed:
@@ -323,17 +477,11 @@ class GPIOPinBar(PinBar, ABC):
         @classmethod
         @abstractmethod
         def _allowed_list_entry_types(cls) -> List:
+            """ Gets a list of the allowed data types when the value to validate is a list. """
             pass
 
     class _ModeValueValidator(_ValueValidator):
-        @classmethod
-        def _validation_mapping(cls):
-            return {
-                int: cls._validate_for_int_index,
-                slice: cls._validate_for_slice_index,
-                list: cls._validate_for_list_index,
-            }
-
+        """ The value validator when setting new gpio pin mode(s). """
         @classmethod
         def _validate_type(cls, value_type):
             if value_type not in [GPIOPinMode, list]:
@@ -344,6 +492,7 @@ class GPIOPinBar(PinBar, ABC):
             return [GPIOPinMode]
 
     class _StateValueValidator(_ValueValidator):
+        """ The value validator when setting new gpio pin state(s). """
         @classmethod
         def _validate_type(cls, value_type):
             if value_type not in [GPIOPinState, list]:
@@ -388,6 +537,15 @@ class GPIOPinBar(PinBar, ABC):
 
     @IndexableProperty
     def modes(self, item) -> Union[Optional[GPIOPinMode], List[Optional[GPIOPinMode]]]:
+        """
+        Get the mode(s) of the pins of this pin bar.
+        Considers the currently set pin addressing!
+
+        :param item: The index item. Valid indices are of type int, slice or list.
+        :return: A GPIOPinMode for int indices,
+          a list of GPIOPinMode and None for slice indices where None represents that the corresponding pin is not
+          a gpio pin, a list of GPIOPinMode for list indices.
+        """
         self._IndexValidator.validate(item=item, offset=self._addressing_offset,
                                       length=self._addressing_array_length, addressing=self.addressing)
 
@@ -400,6 +558,14 @@ class GPIOPinBar(PinBar, ABC):
 
     @modes.itemsetter
     def modes(self, key, value: Union[GPIOPinMode, List[Optional[GPIOPinMode]]]) -> None:
+        """
+        Set new gpio pin mode(s) for the pins of this pin bar.
+        Considers the currently set pin addressing!
+
+        :param key: The index item. Valid indices are of type int, slice or list.
+        :param value: The new value(s). Note that if you use a slice index and the slice is addressing
+          pins that are not of type gpio, you have to pass a None value for these pins.
+        """
         self._IndexValidator.validate(item=key, offset=self._addressing_offset,
                                       length=self._addressing_array_length, addressing=self.addressing)
 
@@ -419,12 +585,27 @@ class GPIOPinBar(PinBar, ABC):
 
         self._change_pin_modes(item_pins, value_it)
 
-    def _change_pin_modes(self, pins: List[_GPIOPin], new_modes_iterator: Iterator[GPIOPinMode]):
+    def _change_pin_modes(self, pins: List[_GPIOPin], new_modes_iterator: Iterator[GPIOPinMode]):  # TODO iterator? change state uses list
+        """
+        Change the modes of the given list of pins.
+
+        :param pins: The pins of which the mode is to be changed.
+        :param new_modes_iterator: An iterator object which provides the new modes.
+        """
         for pin in pins:
             pin.mode = next(new_modes_iterator)
 
     @IndexableProperty
     def states(self, item) -> Union[Optional[GPIOPinState], List[Optional[GPIOPinState]]]:
+        """
+        Get the state(s) of the pins of this pin bar.
+        Considers the currently set pin addressing!
+
+        :param item: The index item. Valid indices are of type int, slice or list.
+        :return: A GPIOPinState for int indices,
+          a list of GPIOPinState and None for slice indices where None represents that the corresponding pin is not
+          a gpio pin or the gpio pin is in OFF mode, a list of GPIOPinState for list indices.
+        """
         self._IndexValidator.validate(item=item, offset=self._addressing_offset,
                                       length=self._addressing_array_length, addressing=self.addressing)
 
@@ -447,10 +628,26 @@ class GPIOPinBar(PinBar, ABC):
 
     @abstractmethod
     def _gpio_pin_states_iterator(self, pins: List[_GPIOPin]) -> Iterator[Optional[GPIOPinState]]:
+        """
+        Gets an iterator which provides the current states of the given pins.
+        The state order of the iterator matches the pin order of the given list of pins.
+
+        :param pins: The pins of which the state is to be read.
+        :return: An iterator returning the current state values in the correct order.
+        """
         pass
 
     @states.itemsetter
     def states(self, key, value: Union[GPIOPinState, List[Optional[GPIOPinState]]]) -> None:
+        """
+        Set new gpio pin state(s) for the pins of this pin bar.
+        Considers the currently set pin addressing!
+
+        :param key: The index item. Valid indices are of type int, slice or list.
+        :param value: The new value(s). Note that if you use a slice index and the slice is addressing
+          pins that are either not of type gpio or are in OFF mode, you have to pass a None value for
+          these pins.
+        """
         self._IndexValidator.validate(item=key, offset=self._addressing_offset,
                                       length=self._addressing_array_length, addressing=self.addressing)
 
@@ -475,9 +672,22 @@ class GPIOPinBar(PinBar, ABC):
 
     @abstractmethod
     def _change_gpio_pin_states(self, pins: List[_GPIOPin], new_states: List[GPIOPinState]) -> None:
+        """
+        Change the states of the given list of pins.
+
+        :param pins: The pins of which the state is to be changed.
+        :param new_states: The list with the new pin states.
+        """
         pass
 
     def _get_pins(self, item: Union[int, slice, list]) -> Union[_Pin, List[_Pin]]:
+        """
+        Gets the pins addressed by a given index item.
+        Considers the currently set pin addressing!
+
+        :param item: An index item of type int, slice or list.
+        :return: A list of pins.
+        """
         if isinstance(item, int):
             return self._addressing_array[item - self._addressing_offset]
 
@@ -492,22 +702,27 @@ class GPIOPinBar(PinBar, ABC):
             return list(pins) if isinstance(pins, Iterable) else [pins]
 
     @staticmethod
-    def _validate_pins_are_gpio(item_pins: Iterable[_Pin]):
+    def _validate_pins_are_gpio(item_pins: Iterable[_Pin]) -> None:
+        """ Validates that a list of pins contains only pins of type GPIOPin. """
         for pin in item_pins:
             if not isinstance(pin, _GPIOPin):
                 raise PinTypeError(f'pin is not of {PinType.__name__}.{PinType.GPIO} for pin idx {pin.idx}')
 
     @staticmethod
-    def _validate_gpio_pin_modes_not_off(gpio_pins: Iterable[_GPIOPin]):
+    def _validate_gpio_pin_modes_not_off(gpio_pins: Iterable[_GPIOPin]) -> None:
+        """ Validates tha a list of gpio pins contains only pins which are NOT in OFF mode. """
         for pin in gpio_pins:
             if pin.mode is GPIOPinMode.OFF:
                 raise ModeIsOffError(f'cannot get state of gpio pin in {GPIOPinMode.OFF} for pin idx {pin.idx}')
 
-    def reset_gpio_pins(self):
+    def reset_gpio_pins(self) -> None:
+        """ Resets all pin modes of this pin bar. """
         self.modes[:] = GPIOPinMode.OFF
 
 
 class GPIOPinBarEmulator(GPIOPinBar):
+    """ An emulator class for a gpio pin bar that provides full control of the pin modes and states. """
+
     def __init__(
             self,
             pin_assignment: List[PinType],
@@ -516,6 +731,21 @@ class GPIOPinBarEmulator(GPIOPinBar):
             gpio_order_from_ids: List[int] = None,
             gpio_idx_offset: int = 0
     ):
+        """
+        Creates a new GPIOPinBarEmulator object that provides functionality for gpio pins and full control
+        of pin modes and states.
+
+        :param pin_assignment: The pin assignment list contains each pin's type.
+          The list is ordered by the pin id on the pin bar starting with the lowest id.
+        :param initial_addressing: Determines which pins are addressed for given indices.
+        :param idx_offset: The id starting offset on the pin bar. This value matches the lowest existing pin bar id.
+          E.g. the first pin has the id 1 on the pin bar, then this parameter needs to be 1 too.
+        :param gpio_order_from_ids: A list of integers that determines the gpio id enumeration.
+          The list is ordered by the gpio id starting with the lowest gpio id and contains the pin bar ids.
+          E.g. Pin 27 on the pin bar is labeled as GPIO_0, then the first entry of this list needs to be 27.
+        :param gpio_idx_offset: The gpio id starting offset of the individual gpio enumeration.
+          This value matches the lowest existing gpio id.
+        """
         super().__init__(
             pin_assignment=pin_assignment,
             initial_addressing=initial_addressing,
@@ -547,11 +777,23 @@ class GPIOPinBarEmulator(GPIOPinBar):
             self._gpio_states[pin.gpio_idx - offset] = state
 
     @IndexableProperty
-    def emulated_gpio_modes(self, item) -> Union[None, GPIOPinMode, List[Optional[GPIOPinMode]]]:
+    def emulated_gpio_modes(self, item) -> Union[GPIOPinMode, List[GPIOPinMode]]:
+        """
+        Get the gpio pin modes of this pin bar in GPIO pin addressing style.
+        :param item: The index item. This is no gpio id! Has to match standard list index types.
+        :return: A list of gpio pin modes for the addressed gpio pins or a single GPIOPinMode
+          value when item is of type int.
+        """
         return [pin.mode for pin in self._gpio_pins][item]
 
     @emulated_gpio_modes.itemsetter
-    def emulated_gpio_modes(self, key, value):
+    def emulated_gpio_modes(self, key, value) -> None:
+        """
+        Set new gpio pin modes without validation. It is your responsibility that this object is in a valid
+        state.
+        :param key: The index item. This is no gpio id! Has to match standard list index types.
+        :param value: The new value(s) to set. Must follow standard list __setitem__ rules.
+        """
         relevant_pins = self._gpio_pins[key]
         relevant_pins = relevant_pins if isinstance(relevant_pins, list) else [relevant_pins]
         value_it = iter([value for _ in relevant_pins]) if isinstance(value, GPIOPinMode) else iter(value)
@@ -560,9 +802,21 @@ class GPIOPinBarEmulator(GPIOPinBar):
             pin.mode = next(value_it)
 
     @IndexableProperty
-    def emulated_gpio_states(self, item) -> Union[None, GPIOPinMode, List[Optional[GPIOPinMode]]]:
+    def emulated_gpio_states(self, item) -> Union[None, GPIOPinState, List[Optional[GPIOPinState]]]:
+        """
+        Get the gpio pin states of this pin bar in GPIO pin addressing style.
+        :param item: The index item. This is no gpio id! Has to match standard list index types.
+        :return: A list of gpio pin states for the addressed gpio pins or a single None or GPIOPinState
+          value when item is of type int.
+        """
         return self._gpio_states[item]
 
     @emulated_gpio_states.itemsetter
-    def emulated_gpio_states(self, key, value):
+    def emulated_gpio_states(self, key, value) -> None:
+        """
+        Set new gpio pin states without validation. It is your responsibility that this object is in a valid
+        state.
+        :param key: The index item. This is no gpio id! Has to match standard list index types.
+        :param value: The new value(s) to set. Must follow standard list __setitem__ rules.
+        """
         self._gpio_states[key] = value
