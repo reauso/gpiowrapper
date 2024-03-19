@@ -78,7 +78,7 @@ class RPiGPIOPinBar(GPIOPinBar):
         }
 
     def _change_pin_modes(self, pins: List[_GPIOPin], new_modes_iterator: Iterator[GPIOPinMode]):
-        new_modes = [mode for mode in new_modes_iterator]
+        new_modes = [next(new_modes_iterator) for _ in pins]
 
         pins_and_new_modes = zip(pins, new_modes)
         pins_and_new_modes = [(pin, new_mode) for pin, new_mode in pins_and_new_modes
