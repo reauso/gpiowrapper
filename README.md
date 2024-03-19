@@ -9,7 +9,7 @@ So that you can simply switch between different electronic pin bar layouts, boar
 The simplest way to install the gpiowrapper library is to install from pypi via
 ```pip install gpiowrapper```
 But you can also install from the github repo instead.
-```pip install git+https://github.com/reauso/gpiowrapper.git@main```
+```pip install git+https://github.com/reauso/gpiowrapper.git@latest```
 
 There are some optional extra dependency packages which enable the usage of existing implementations for
 libraries and boards. A full list of current implementations is available in section 
