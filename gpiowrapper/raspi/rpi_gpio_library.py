@@ -1,7 +1,7 @@
 from typing import List, Optional, Iterator
 
 from .raspi_base import Raspi40PinBarData
-from ..base import GPIOPinBar, _GPIOPin, GPIOPinState, GPIOPinMode, PinAddressing, PinType
+from ..base import GPIOPinBar, GPIOPin, GPIOPinState, GPIOPinMode, PinAddressing, PinType
 from ..util import RequiresOptionalImport
 
 try:
@@ -77,7 +77,7 @@ class RPiGPIOPinBar(GPIOPinBar):
             GPIOPinState.LOW: GPIO.LOW,
         }
 
-    def _change_pin_modes(self, pins: List[_GPIOPin], new_modes: List[GPIOPinMode]):
+    def _change_pin_modes(self, pins: List[GPIOPin], new_modes: List[GPIOPinMode]):
         pins_and_new_modes = zip(pins, new_modes)
         pins_and_new_modes = [(pin, new_mode) for pin, new_mode in pins_and_new_modes
                               if pin.mode is not new_mode]
@@ -96,14 +96,14 @@ class RPiGPIOPinBar(GPIOPinBar):
             GPIO.setup(pin_id, rpi_mode, pull_up_down=rpi_pull_up_down)
             pin.mode = new_mode
 
-    def _gpio_pin_states_iterator(self, pins: List[_GPIOPin]) -> Iterator[Optional[GPIOPinState]]:
+    def _gpio_pin_states_iterator(self, pins: List[GPIOPin]) -> Iterator[Optional[GPIOPinState]]:
         channel_ids = [pin.idx for pin in pins]
         states: List[int] = [GPIO.input(idx) for idx in channel_ids]
         states: List[GPIOPinState] = [self._rpi_to_state_mapping[state] for state in states]
 
         return iter(states)
 
-    def _change_gpio_pin_states(self, pins: List[_GPIOPin], new_states: List[GPIOPinState]) -> None:
+    def _change_gpio_pin_states(self, pins: List[GPIOPin], new_states: List[GPIOPinState]) -> None:
         channel_ids = [pin.idx for pin in pins]
         states: List[int] = [self._state_to_rpi_mapping[state] for state in new_states]
         GPIO.output(channel_ids, states)

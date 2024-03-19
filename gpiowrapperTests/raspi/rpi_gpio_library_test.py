@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import patch, MagicMock, call, ANY
 
 from gpiowrapper import GPIOPinMode
-from gpiowrapper.base import PinAddressing, _GPIOPin, PinType, GPIOPinState
+from gpiowrapper.base import PinAddressing, GPIOPin, PinType, GPIOPinState
 from gpiowrapper.raspi import Raspi40PinBarRPi
 from gpiowrapper.raspi.rpi_gpio_library import RPiGPIOPinBar
 from gpiowrapperTests.raspi.raspi_base_test import RaspiPinBarTestDefaults
@@ -30,9 +30,9 @@ class RPiGPIOPinBarTests(unittest.TestCase):
         ]
         bar = RPiGPIOPinBar(pin_assignment, initial_addressing=PinAddressing.GPIO)
         pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
         new_modes = [GPIOPinMode.OUT, GPIOPinMode.OFF, GPIOPinMode.IN]
 
@@ -55,9 +55,9 @@ class RPiGPIOPinBarTests(unittest.TestCase):
         ]
         bar = RPiGPIOPinBar(pin_assignment, initial_addressing=PinAddressing.GPIO)
         pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
         ]
         new_modes = [GPIOPinMode.OFF, GPIOPinMode.IN, GPIOPinMode.OUT]
 
@@ -78,9 +78,9 @@ class RPiGPIOPinBarTests(unittest.TestCase):
         ]
         bar = RPiGPIOPinBar(pin_assignment, initial_addressing=PinAddressing.GPIO)
         pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
         new_modes = [GPIOPinMode.OFF, GPIOPinMode.IN, GPIOPinMode.OUT]
 
@@ -107,9 +107,9 @@ class RPiGPIOPinBarTests(unittest.TestCase):
         ]
         bar = RPiGPIOPinBar(pin_assignment, initial_addressing=PinAddressing.GPIO)
         pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
         new_modes = [GPIOPinMode.OFF, GPIOPinMode.OUT, GPIOPinMode.IN]
 
@@ -130,9 +130,9 @@ class RPiGPIOPinBarTests(unittest.TestCase):
         ]
         bar = RPiGPIOPinBar(pin_assignment, initial_addressing=PinAddressing.GPIO)
         pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
         new_modes = [GPIOPinMode.OFF, GPIOPinMode.OFF, GPIOPinMode.OFF]
 
@@ -153,9 +153,9 @@ class RPiGPIOPinBarTests(unittest.TestCase):
         ]
         bar = RPiGPIOPinBar(pin_assignment, initial_addressing=PinAddressing.GPIO)
         pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
         new_modes = [GPIOPinMode.IN, GPIOPinMode.IN, GPIOPinMode.OUT]
 
@@ -182,9 +182,9 @@ class RPiGPIOPinBarTests(unittest.TestCase):
         ]
         bar = RPiGPIOPinBar(pin_assignment, initial_addressing=PinAddressing.GPIO)
         pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
         ]
         new_modes = [GPIOPinMode.IN_PULL_UP, GPIOPinMode.IN, GPIOPinMode.IN_PULL_DOWN]
 
@@ -211,9 +211,9 @@ class RPiGPIOPinBarTests(unittest.TestCase):
         ]
         bar = RPiGPIOPinBar(pin_assignment, initial_addressing=PinAddressing.GPIO)
         pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
         new_modes = [GPIOPinMode.OFF, GPIOPinMode.OUT, GPIOPinMode.IN]
 
@@ -234,9 +234,9 @@ class RPiGPIOPinBarTests(unittest.TestCase):
         ]
         bar = RPiGPIOPinBar(pin_assignment, initial_addressing=PinAddressing.GPIO)
         pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
         input_mock.side_effect = [GPIO.HIGH, GPIO.HIGH, GPIO.LOW]
 
@@ -259,9 +259,9 @@ class RPiGPIOPinBarTests(unittest.TestCase):
         ]
         bar = RPiGPIOPinBar(pin_assignment, initial_addressing=PinAddressing.GPIO)
         pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
         input_mock.side_effect = [GPIO.HIGH, GPIO.HIGH, GPIO.LOW]
 
@@ -284,9 +284,9 @@ class RPiGPIOPinBarTests(unittest.TestCase):
         ]
         bar = RPiGPIOPinBar(pin_assignment, initial_addressing=PinAddressing.GPIO)
         pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
         new_states = [GPIOPinState.HIGH, GPIOPinState.HIGH, GPIOPinState.LOW]
 
@@ -307,9 +307,9 @@ class RPiGPIOPinBarTests(unittest.TestCase):
         ]
         bar = RPiGPIOPinBar(pin_assignment, initial_addressing=PinAddressing.GPIO)
         bar._pins = bar._gpio_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
 
         # Act

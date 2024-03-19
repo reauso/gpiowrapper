@@ -113,7 +113,7 @@ class GPIOPinMode(Enum):
 
 
 @dataclass(slots=True, kw_only=True)
-class _Pin:
+class Pin:
     """
     Dataclass to store pin data.
     """
@@ -125,7 +125,7 @@ class _Pin:
 
 
 @dataclass(slots=True, kw_only=True)
-class _GPIOPin(_Pin):
+class GPIOPin(Pin):
     """
     Dataclass to additionally store gpio pin data.
     """
@@ -184,7 +184,7 @@ class PinBar(ABC):
         :param idx_offset: The id starting offset on the pin bar. This value matches the lowest existing pin bar id.
           E.g. the first pin has the id 1 on the pin bar, then this parameter needs to be 1 too.
         """
-        self._pins: List[_Pin] = [_Pin(idx=i + idx_offset, type=type) for i, type in enumerate(pin_assignment)]
+        self._pins: List[Pin] = [Pin(idx=i + idx_offset, type=type) for i, type in enumerate(pin_assignment)]
         self._idx_offset: int = idx_offset
 
     @property
@@ -239,7 +239,7 @@ class GPIOPinBar(PinBar, ABC):
         self._gpio_idx_offset: int = gpio_idx_offset
 
         self._convert_gpio_types_in_pins_list(gpio_order_from_ids)
-        self._gpio_pins: List[_GPIOPin] = [pin for pin in self._pins if isinstance(pin, _GPIOPin)]
+        self._gpio_pins: List[GPIOPin] = [pin for pin in self._pins if isinstance(pin, GPIOPin)]
         self._gpio_pins.sort(key=lambda x: x.gpio_idx)
 
         self._index_validator_class: IndexValidator.__class__ = IndexValidator
@@ -265,7 +265,7 @@ class GPIOPinBar(PinBar, ABC):
 
         for i, index in enumerate(gpio_order_indices):
             pin = self._pins[index]
-            self._pins[index] = _GPIOPin(
+            self._pins[index] = GPIOPin(
                 idx=pin.idx,
                 type=PinType.GPIO,
                 gpio_idx=i + self._gpio_idx_offset,
@@ -340,9 +340,9 @@ class GPIOPinBar(PinBar, ABC):
         item_pins = self._get_pins(item=item)
 
         if isinstance(item_pins, list):
-            return [pin.mode if isinstance(pin, _GPIOPin) else None for pin in item_pins]
+            return [pin.mode if isinstance(pin, GPIOPin) else None for pin in item_pins]
         else:
-            return item_pins.mode if isinstance(item_pins, _GPIOPin) else None
+            return item_pins.mode if isinstance(item_pins, GPIOPin) else None
 
     @modes.itemsetter
     def modes(self, key, value: Union[GPIOPinMode, List[Optional[GPIOPinMode]]]) -> None:
@@ -368,12 +368,12 @@ class GPIOPinBar(PinBar, ABC):
         if isinstance(value, list):
             value = [v for v in value if v is not None]
 
-        item_pins = [pin for pin in item_pins if isinstance(pin, _GPIOPin)]
+        item_pins = [pin for pin in item_pins if isinstance(pin, GPIOPin)]
         new_values = [value for _ in item_pins] if isinstance(value, GPIOPinMode) else list(value)
 
         self._change_pin_modes(item_pins, new_values)
 
-    def _change_pin_modes(self, pins: List[_GPIOPin], new_modes: List[GPIOPinMode]):
+    def _change_pin_modes(self, pins: List[GPIOPin], new_modes: List[GPIOPinMode]):
         """
         Change the modes of the given list of pins.
 
@@ -399,7 +399,7 @@ class GPIOPinBar(PinBar, ABC):
 
         item_pins = self._get_pins(item=item)
         item_pins = [item_pins] if not isinstance(item_pins, list) else item_pins
-        gpio_pins = [pin for pin in item_pins if isinstance(pin, _GPIOPin)]
+        gpio_pins = [pin for pin in item_pins if isinstance(pin, GPIOPin)]
 
         if not isinstance(item, slice):
             self._validate_pins_are_gpio(item_pins)
@@ -411,11 +411,11 @@ class GPIOPinBar(PinBar, ABC):
         if isinstance(item, int):
             return next(state_iterator)
         else:
-            return [next(state_iterator) if isinstance(pin, _GPIOPin) and pin.mode is not GPIOPinMode.OFF else None
+            return [next(state_iterator) if isinstance(pin, GPIOPin) and pin.mode is not GPIOPinMode.OFF else None
                     for pin in item_pins]
 
     @abstractmethod
-    def _gpio_pin_states_iterator(self, pins: List[_GPIOPin]) -> Iterator[Optional[GPIOPinState]]:
+    def _gpio_pin_states_iterator(self, pins: List[GPIOPin]) -> Iterator[Optional[GPIOPinState]]:
         """
         Gets an iterator which provides the current states of the given pins.
         The state order of the iterator matches the pin order of the given list of pins.
@@ -441,7 +441,7 @@ class GPIOPinBar(PinBar, ABC):
 
         item_pins = self._get_pins(item=key)
         item_pins = [item_pins] if not isinstance(item_pins, list) else item_pins
-        gpio_pins = [pin for pin in item_pins if isinstance(pin, _GPIOPin)]
+        gpio_pins = [pin for pin in item_pins if isinstance(pin, GPIOPin)]
 
         if not isinstance(key, slice):
             self._validate_pins_are_gpio(item_pins)
@@ -459,7 +459,7 @@ class GPIOPinBar(PinBar, ABC):
         self._change_gpio_pin_states(gpio_pins, value)
 
     @abstractmethod
-    def _change_gpio_pin_states(self, pins: List[_GPIOPin], new_states: List[GPIOPinState]) -> None:
+    def _change_gpio_pin_states(self, pins: List[GPIOPin], new_states: List[GPIOPinState]) -> None:
         """
         Change the states of the given list of pins.
 
@@ -468,7 +468,7 @@ class GPIOPinBar(PinBar, ABC):
         """
         pass
 
-    def _get_pins(self, item: Union[int, slice, list]) -> Union[_Pin, List[_Pin]]:
+    def _get_pins(self, item: Union[int, slice, list]) -> Union[Pin, List[Pin]]:
         """
         Gets the pins addressed by a given index item.
         Considers the currently set pin addressing!
@@ -490,14 +490,14 @@ class GPIOPinBar(PinBar, ABC):
             return list(pins) if isinstance(pins, Iterable) else [pins]
 
     @staticmethod
-    def _validate_pins_are_gpio(item_pins: Iterable[_Pin]) -> None:
+    def _validate_pins_are_gpio(item_pins: Iterable[Pin]) -> None:
         """ Validates that a list of pins contains only pins of type GPIOPin. """
         for pin in item_pins:
-            if not isinstance(pin, _GPIOPin):
+            if not isinstance(pin, GPIOPin):
                 raise PinTypeError(f'pin is not of {PinType.__name__}.{PinType.GPIO} for pin idx {pin.idx}')
 
     @staticmethod
-    def _validate_gpio_pin_modes_not_off(gpio_pins: Iterable[_GPIOPin]) -> None:
+    def _validate_gpio_pin_modes_not_off(gpio_pins: Iterable[GPIOPin]) -> None:
         """ Validates tha a list of gpio pins contains only pins which are NOT in OFF mode. """
         for pin in gpio_pins:
             if pin.mode is GPIOPinMode.OFF:
@@ -592,7 +592,7 @@ class ValueValidator(ABC):
         }
 
     @classmethod
-    def validate(cls, value, index_type, considered_pins: List[_Pin]):
+    def validate(cls, value, index_type, considered_pins: List[Pin]):
         """
         Validates both type and value of the given value.
         :param value: The value to validate.
@@ -619,14 +619,14 @@ class ValueValidator(ABC):
             raise ValueError('setting an array element with a sequence.')
 
     @classmethod
-    def _validate_for_slice_index(cls, value, considered_pins: List[_Pin], **_):
+    def _validate_for_slice_index(cls, value, considered_pins: List[Pin], **_):
         """ Validates the value for a slice index. """
         if isinstance(value, list):
             cls._validate_list_size(considered_pins, value)
             cls._validate_list_entries(value, considered_pins, none_allowed=True)
 
     @classmethod
-    def _validate_for_list_index(cls, value, considered_pins: List[_Pin], **_):
+    def _validate_for_list_index(cls, value, considered_pins: List[Pin], **_):
         """ Validates the value for a list index. """
         if isinstance(value, list):
             cls._validate_list_size(considered_pins, value)
@@ -640,7 +640,7 @@ class ValueValidator(ABC):
                 f'could not broadcast input array from size {len(value)} into size {len(considered_pins)}')
 
     @classmethod
-    def _validate_list_entries(cls, value, considered_pins: List[_Pin], none_allowed: bool) -> None:
+    def _validate_list_entries(cls, value, considered_pins: List[Pin], none_allowed: bool) -> None:
         """
         Validates that the value list entries are valid for each individual pin type of the
         considered pins.
@@ -660,7 +660,7 @@ class ValueValidator(ABC):
                        f'Found type {type(v).__name__} at position {i}')
                 raise ValueError(msg)
 
-            if (v is None and isinstance(pin, _GPIOPin)) or (v is not None and not isinstance(pin, _GPIOPin)):
+            if (v is None and isinstance(pin, GPIOPin)) or (v is not None and not isinstance(pin, GPIOPin)):
                 msg = f'unable to assign {v} at position {i} to pin of type {pin.type}'
                 raise PinTypeError(msg)
 
@@ -693,7 +693,7 @@ class StateValueValidator(ValueValidator):
             raise TypeError(f'value must be {GPIOPinState.__name__} or list, not {value_type.__name__}')
 
     @classmethod
-    def _validate_list_entries(cls, value, considered_pins: List[_Pin], none_allowed: bool):
+    def _validate_list_entries(cls, value, considered_pins: List[Pin], none_allowed: bool):
         value_pin_zip = zip(value, considered_pins)
         allowed_entry_types = cls._allowed_list_entry_types()
         if none_allowed:
@@ -716,13 +716,13 @@ class StateValueValidator(ValueValidator):
             '''
 
             msg = f'unable to assign {v} at position {i} to pin of type {pin.type}'
-            msg = f'{msg} with {pin.mode}' if isinstance(pin, _GPIOPin) else msg
+            msg = f'{msg} with {pin.mode}' if isinstance(pin, GPIOPin) else msg
 
-            if v is not None and not isinstance(pin, _GPIOPin):
+            if v is not None and not isinstance(pin, GPIOPin):
                 raise PinTypeError(msg)
-            elif v is not None and isinstance(pin, _GPIOPin) and pin.mode is GPIOPinMode.OFF:
+            elif v is not None and isinstance(pin, GPIOPin) and pin.mode is GPIOPinMode.OFF:
                 raise ModeIsOffError(msg)
-            elif v is None and isinstance(pin, _GPIOPin) and pin.mode is not GPIOPinMode.OFF:
+            elif v is None and isinstance(pin, GPIOPin) and pin.mode is not GPIOPinMode.OFF:
                 raise ValueError(msg)
 
     @classmethod
@@ -765,7 +765,7 @@ class GPIOPinBarEmulator(GPIOPinBar):
         )
         self._gpio_states: List[Optional[GPIOPinState]] = [None for _ in self._gpio_pins]
 
-    def _change_pin_modes(self, pins: List[_GPIOPin], new_modes: List[GPIOPinMode]):
+    def _change_pin_modes(self, pins: List[GPIOPin], new_modes: List[GPIOPinMode]):
         offset = self.gpio_idx_offset
         for pin, new_mode in zip(pins, new_modes):
             pin.mode = new_mode
@@ -776,11 +776,11 @@ class GPIOPinBarEmulator(GPIOPinBar):
             elif current_state is None:
                 self._gpio_states[pin.gpio_idx - offset] = GPIOPinState.LOW
 
-    def _gpio_pin_states_iterator(self, pins: List[_GPIOPin]) -> Iterator[Optional[GPIOPinState]]:
+    def _gpio_pin_states_iterator(self, pins: List[GPIOPin]) -> Iterator[Optional[GPIOPinState]]:
         offset = self.gpio_idx_offset
         return iter([self._gpio_states[pin.gpio_idx - offset] for pin in pins])
 
-    def _change_gpio_pin_states(self, pins: List[_GPIOPin], new_states: List[GPIOPinState]) -> None:
+    def _change_gpio_pin_states(self, pins: List[GPIOPin], new_states: List[GPIOPinState]) -> None:
         offset = self.gpio_idx_offset
 
         for pin, state in zip(pins, new_states):

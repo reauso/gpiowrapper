@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock, call
 from parameterized import parameterized
 
 from gpiowrapper import GPIOPinState, GPIOPinMode, PinAddressing, PinType, GPIOPinBarEmulator
-from gpiowrapper.base import PinBar, _Pin, _GPIOPin, GPIOPinBar, ModeIsOffError, PinTypeError, \
+from gpiowrapper.base import PinBar, Pin, GPIOPin, GPIOPinBar, ModeIsOffError, PinTypeError, \
     PinBarError, ModeValueValidator, IndexValidator, StateValueValidator
 from gpiowrapperTests.useful_test_util import ExtendedTestCase
 
@@ -34,13 +34,13 @@ class PinBarTests(unittest.TestCase):
             PinType.OTHER,
         ]
         expected_pins = [
-            _Pin(idx=0, type=PinType.POWER),
-            _Pin(idx=1, type=PinType.GROUND),
-            _Pin(idx=2, type=PinType.GPIO),
-            _Pin(idx=3, type=PinType.GPIO),
-            _Pin(idx=4, type=PinType.GPIO),
-            _Pin(idx=5, type=PinType.GPIO),
-            _Pin(idx=6, type=PinType.OTHER),
+            Pin(idx=0, type=PinType.POWER),
+            Pin(idx=1, type=PinType.GROUND),
+            Pin(idx=2, type=PinType.GPIO),
+            Pin(idx=3, type=PinType.GPIO),
+            Pin(idx=4, type=PinType.GPIO),
+            Pin(idx=5, type=PinType.GPIO),
+            Pin(idx=6, type=PinType.OTHER),
         ]
 
         # Act
@@ -62,13 +62,13 @@ class PinBarTests(unittest.TestCase):
             PinType.OTHER,
         ]
         expected_pins = [
-            _Pin(idx=5, type=PinType.POWER),
-            _Pin(idx=6, type=PinType.GROUND),
-            _Pin(idx=7, type=PinType.GPIO),
-            _Pin(idx=8, type=PinType.GPIO),
-            _Pin(idx=9, type=PinType.GPIO),
-            _Pin(idx=10, type=PinType.GPIO),
-            _Pin(idx=11, type=PinType.OTHER),
+            Pin(idx=5, type=PinType.POWER),
+            Pin(idx=6, type=PinType.GROUND),
+            Pin(idx=7, type=PinType.GPIO),
+            Pin(idx=8, type=PinType.GPIO),
+            Pin(idx=9, type=PinType.GPIO),
+            Pin(idx=10, type=PinType.GPIO),
+            Pin(idx=11, type=PinType.OTHER),
         ]
 
         # Act
@@ -116,7 +116,7 @@ class GPIOPinBarTests(ExtendedTestCase):
             PinType.GPIO,
             PinType.OTHER,
         ]
-        expected_gpio_pins = [_GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF)]
+        expected_gpio_pins = [GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF)]
 
         # Act
         bar = GPIOPinBar(pin_assignment, initial_addressing=PinAddressing.PinBar)
@@ -137,9 +137,9 @@ class GPIOPinBarTests(ExtendedTestCase):
             PinType.OTHER,
         ]
         expected_gpio_pins = [
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=3, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=4, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=3, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=4, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
         ]
 
         # Act
@@ -198,9 +198,9 @@ class GPIOPinBarTests(ExtendedTestCase):
         ]
         gpio_order_by_idx = [3, 2, 4]
         expected_gpio_pins = [
-            _GPIOPin(idx=3, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=4, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=3, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=4, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -222,9 +222,9 @@ class GPIOPinBarTests(ExtendedTestCase):
         gpio_order_by_idx = [3, 2, 4]
         offset = 3
         expected_gpio_pins = [
-            _GPIOPin(idx=3, type=PinType.GPIO, gpio_idx=3, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=4, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=4, type=PinType.GPIO, gpio_idx=5, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=3, type=PinType.GPIO, gpio_idx=3, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=4, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=4, type=PinType.GPIO, gpio_idx=5, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -570,8 +570,8 @@ class ModeValueValidatorTests(ExtendedTestCase):
     def test_validate__Always__CallsValidateType(self, value, validator_mock: MagicMock):
         # Arrange
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
         index_types = [int, slice, list]
 
@@ -599,8 +599,8 @@ class ModeValueValidatorTests(ExtendedTestCase):
     def test_validate__IntIndex__CallsValidateForIntIndex(self, value, validator_mock: MagicMock):
         # Arrange
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act
@@ -621,8 +621,8 @@ class ModeValueValidatorTests(ExtendedTestCase):
     def test_validate__SliceIndex__CallsValidateForSliceIndex(self, value, validator_mock: MagicMock):
         # Arrange
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act
@@ -643,8 +643,8 @@ class ModeValueValidatorTests(ExtendedTestCase):
     def test_validate__ListIndex__CallsValidateForListIndex(self, value, validator_mock: MagicMock):
         # Arrange
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act
@@ -678,8 +678,8 @@ class ModeValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = GPIOPinMode.OUT
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -690,8 +690,8 @@ class ModeValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinMode.OUT, GPIOPinMode.IN]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -703,9 +703,9 @@ class ModeValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = GPIOPinMode.OUT
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
-            _Pin(idx=2, type=PinType.GPIO),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            Pin(idx=2, type=PinType.GPIO),
         ]
 
         # Act & Assert
@@ -716,8 +716,8 @@ class ModeValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinMode.OUT, 'test']
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -729,8 +729,8 @@ class ModeValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinMode.OUT, GPIOPinMode.IN]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -741,8 +741,8 @@ class ModeValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinMode.OUT, GPIOPinMode.IN]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _Pin(idx=1, type=PinType.GROUND),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            Pin(idx=1, type=PinType.GROUND),
         ]
 
         # Act & Assert
@@ -754,8 +754,8 @@ class ModeValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinMode.OUT, None]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -767,8 +767,8 @@ class ModeValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinMode.OUT, None]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _Pin(idx=1, type=PinType.GROUND),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            Pin(idx=1, type=PinType.GROUND),
         ]
 
         # Act & Assert
@@ -779,9 +779,9 @@ class ModeValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinMode.OUT, GPIOPinMode.IN]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
-            _Pin(idx=2, type=PinType.GROUND),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            Pin(idx=2, type=PinType.GROUND),
         ]
 
         # Act & Assert
@@ -793,7 +793,7 @@ class ModeValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinMode.OUT, GPIOPinMode.IN]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -805,8 +805,8 @@ class ModeValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = GPIOPinMode.OUT
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -817,8 +817,8 @@ class ModeValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinMode.OUT, 'test']
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -830,8 +830,8 @@ class ModeValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinMode.OUT, GPIOPinMode.IN]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -842,8 +842,8 @@ class ModeValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinMode.OUT, None]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -855,9 +855,9 @@ class ModeValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinMode.OUT, GPIOPinMode.IN]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -869,7 +869,7 @@ class ModeValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinMode.OUT, GPIOPinMode.IN]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -890,8 +890,8 @@ class StateValueValidatorTests(ExtendedTestCase):
     def test_validate__Always__CallsValidateType(self, value, validator_mock: MagicMock):
         # Arrange
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
         index_types = [int, slice, list]
 
@@ -919,8 +919,8 @@ class StateValueValidatorTests(ExtendedTestCase):
     def test_validate__IntIndex__CallsValidateForIntIndex(self, value, validator_mock: MagicMock):
         # Arrange
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act
@@ -941,8 +941,8 @@ class StateValueValidatorTests(ExtendedTestCase):
     def test_validate__SliceIndex__CallsValidateForSliceIndex(self, value, validator_mock: MagicMock):
         # Arrange
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act
@@ -963,8 +963,8 @@ class StateValueValidatorTests(ExtendedTestCase):
     def test_validate__ListIndex__CallsValidateForListIndex(self, value, validator_mock: MagicMock):
         # Arrange
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act
@@ -998,8 +998,8 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = GPIOPinState.LOW
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -1010,8 +1010,8 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinState.LOW, GPIOPinState.HIGH]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -1023,9 +1023,9 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = GPIOPinState.LOW
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
-            _Pin(idx=2, type=PinType.GPIO),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
+            Pin(idx=2, type=PinType.GPIO),
         ]
 
         # Act & Assert
@@ -1036,8 +1036,8 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinState.LOW, 'test']
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
         ]
 
         # Act & Assert
@@ -1049,8 +1049,8 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinState.LOW, GPIOPinState.HIGH]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
         ]
 
         # Act & Assert
@@ -1061,8 +1061,8 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinState.LOW, GPIOPinState.HIGH]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -1075,8 +1075,8 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinState.LOW, GPIOPinState.HIGH]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _Pin(idx=1, type=PinType.GROUND),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            Pin(idx=1, type=PinType.GROUND),
         ]
 
         # Act & Assert
@@ -1089,8 +1089,8 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinState.LOW, None]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
         ]
 
         # Act & Assert
@@ -1102,8 +1102,8 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinState.LOW, None]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -1114,8 +1114,8 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinState.LOW, None]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _Pin(idx=1, type=PinType.GROUND),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            Pin(idx=1, type=PinType.GROUND),
         ]
 
         # Act & Assert
@@ -1126,9 +1126,9 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinState.LOW, GPIOPinState.HIGH]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
-            _Pin(idx=2, type=PinType.GROUND),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
+            Pin(idx=2, type=PinType.GROUND),
         ]
 
         # Act & Assert
@@ -1140,7 +1140,7 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinState.LOW, GPIOPinState.HIGH]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
         ]
 
         # Act & Assert
@@ -1152,8 +1152,8 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = GPIOPinState.LOW
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
         ]
 
         # Act & Assert
@@ -1164,8 +1164,8 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinState.LOW, 'test']
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
         ]
 
         # Act & Assert
@@ -1177,8 +1177,8 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinState.LOW, GPIOPinState.HIGH]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
         ]
 
         # Act & Assert
@@ -1189,8 +1189,8 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinState.LOW, None]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
         ]
 
         # Act & Assert
@@ -1202,9 +1202,9 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinState.LOW, GPIOPinState.HIGH]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
 
         # Act & Assert
@@ -1216,7 +1216,7 @@ class StateValueValidatorTests(ExtendedTestCase):
         # Arrange
         value = [GPIOPinState.LOW, GPIOPinState.HIGH]
         considered_pins = [
-            _GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=0, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
         ]
 
         # Act & Assert
@@ -1645,7 +1645,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         with self.assertRaisesRegex(PinTypeError, expected_regex):
             bar.modes[5] = GPIOPinMode.OUT
 
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OFF, GPIOPinMode.OFF, GPIOPinMode.OFF, None]
         self.assertListEqual(expected, actual)
 
@@ -1666,7 +1666,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         bar.modes[1] = GPIOPinMode.OUT
 
         # Assert
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OFF, GPIOPinMode.OUT, GPIOPinMode.OFF, None]
         self.assertListEqual(expected, actual)
 
@@ -1686,7 +1686,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         bar.modes[3] = GPIOPinMode.OUT
 
         # Assert
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OFF, GPIOPinMode.OUT, GPIOPinMode.OFF, None]
         self.assertListEqual(expected, actual)
 
@@ -1706,7 +1706,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         bar.modes[13] = GPIOPinMode.OUT
 
         # Assert
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OFF, GPIOPinMode.OUT, GPIOPinMode.OFF, None]
         self.assertListEqual(expected, actual)
 
@@ -1727,7 +1727,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         bar.modes[5] = GPIOPinMode.OUT
 
         # Assert
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OFF, GPIOPinMode.OUT, GPIOPinMode.OFF, None]
         self.assertListEqual(expected, actual)
 
@@ -1747,7 +1747,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         bar.modes[:] = GPIOPinMode.OUT
 
         # Assert
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OUT, GPIOPinMode.OUT, GPIOPinMode.OUT, None]
         self.assertListEqual(expected, actual)
 
@@ -1768,7 +1768,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         bar.modes[1:3] = GPIOPinMode.OUT
 
         # Assert
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OFF, GPIOPinMode.OUT, GPIOPinMode.OUT, None]
         self.assertListEqual(expected, actual)
 
@@ -1788,7 +1788,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         bar.modes[1:] = [None, GPIOPinMode.OUT, GPIOPinMode.IN, GPIOPinMode.OFF, None]
 
         # Assert
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OUT, GPIOPinMode.IN, GPIOPinMode.OFF, None]
         self.assertListEqual(expected, actual)
 
@@ -1809,7 +1809,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         bar.modes[1:3] = [GPIOPinMode.OUT, GPIOPinMode.IN]
 
         # Assert
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OFF, GPIOPinMode.OUT, GPIOPinMode.IN, None]
         self.assertListEqual(expected, actual)
 
@@ -1829,7 +1829,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         bar.modes[11:14] = GPIOPinMode.OUT
 
         # Assert
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OUT, GPIOPinMode.OUT, GPIOPinMode.OFF, None]
         self.assertListEqual(expected, actual)
 
@@ -1850,7 +1850,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         bar.modes[5:6] = GPIOPinMode.OUT
 
         # Assert
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OFF, GPIOPinMode.OUT, GPIOPinMode.OFF, None]
         self.assertListEqual(expected, actual)
 
@@ -1871,7 +1871,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         with self.assertRaisesRegex(PinTypeError, expected_regex):
             bar.modes[[5, 3, 0, 2, 1]] = GPIOPinMode.OUT
 
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OFF, GPIOPinMode.OFF, GPIOPinMode.OFF, None]
         self.assertListEqual(expected, actual)
 
@@ -1907,7 +1907,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         bar.modes[[3, 2]] = GPIOPinMode.OUT
 
         # Assert
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OUT, GPIOPinMode.OUT, GPIOPinMode.OFF, None]
         self.assertListEqual(expected, actual)
 
@@ -1928,7 +1928,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         bar.modes[[1, 2]] = GPIOPinMode.OUT
 
         # Assert
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OFF, GPIOPinMode.OUT, GPIOPinMode.OUT, None]
         self.assertListEqual(expected, actual)
 
@@ -1948,7 +1948,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         bar.modes[[3, 2]] = [GPIOPinMode.OUT, GPIOPinMode.IN]
 
         # Assert
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.IN, GPIOPinMode.OUT, GPIOPinMode.OFF, None]
         self.assertListEqual(expected, actual)
 
@@ -1970,7 +1970,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         bar.modes[[2, 1]] = [GPIOPinMode.OUT, GPIOPinMode.IN]
 
         # Assert
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OFF, GPIOPinMode.IN, GPIOPinMode.OUT, None]
         self.assertListEqual(expected, actual)
 
@@ -1990,7 +1990,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         bar.modes[[12, 14]] = GPIOPinMode.OUT
 
         # Assert
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OUT, GPIOPinMode.OFF, GPIOPinMode.OUT, None]
         self.assertListEqual(expected, actual)
 
@@ -2011,7 +2011,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         bar.modes[[4, 6]] = GPIOPinMode.OUT
 
         # Assert
-        actual = [pin.mode if isinstance(pin, _GPIOPin) else None for pin in bar._pins]
+        actual = [pin.mode if isinstance(pin, GPIOPin) else None for pin in bar._pins]
         expected = [None, None, GPIOPinMode.OUT, GPIOPinMode.OFF, GPIOPinMode.OUT, None]
         self.assertListEqual(expected, actual)
 
@@ -3187,18 +3187,18 @@ class GPIOPinBarEmulatorTests(unittest.TestCase):
         ]
         bar = GPIOPinBarEmulator(pin_assignment, initial_addressing=PinAddressing.GPIO)
         pins = [
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=3, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
-            _GPIOPin(idx=4, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=3, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
+            GPIOPin(idx=4, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
         ]
-        modes_iter = iter([GPIOPinMode.OFF, GPIOPinMode.OFF, GPIOPinMode.OFF])
+        modes = [GPIOPinMode.OFF, GPIOPinMode.OFF, GPIOPinMode.OFF]
 
         previous_states = [GPIOPinState.HIGH, GPIOPinState.LOW, None]
         bar._gpio_states = previous_states
         assert bar._gpio_states == previous_states
 
         # Act
-        bar._change_pin_modes(pins, modes_iter)
+        bar._change_pin_modes(pins, modes)
 
         # Assert
         expected_modes = [GPIOPinMode.OFF, GPIOPinMode.OFF, GPIOPinMode.OFF]
@@ -3220,18 +3220,18 @@ class GPIOPinBarEmulatorTests(unittest.TestCase):
         ]
         bar = GPIOPinBarEmulator(pin_assignment, initial_addressing=PinAddressing.GPIO)
         pins = [
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=3, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
-            _GPIOPin(idx=4, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=3, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
+            GPIOPin(idx=4, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
         ]
-        modes_iter = iter([GPIOPinMode.OUT, GPIOPinMode.OUT, GPIOPinMode.OUT])
+        modes = [GPIOPinMode.OUT, GPIOPinMode.OUT, GPIOPinMode.OUT]
 
         previous_states = [GPIOPinState.HIGH, GPIOPinState.LOW, None]
         bar._gpio_states = previous_states
         assert bar._gpio_states == previous_states
 
         # Act
-        bar._change_pin_modes(pins, modes_iter)
+        bar._change_pin_modes(pins, modes)
 
         # Assert
         expected_modes = [GPIOPinMode.OUT, GPIOPinMode.OUT, GPIOPinMode.OUT]
@@ -3253,18 +3253,18 @@ class GPIOPinBarEmulatorTests(unittest.TestCase):
         ]
         bar = GPIOPinBarEmulator(pin_assignment, initial_addressing=PinAddressing.GPIO)
         pins = [
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=3, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
-            _GPIOPin(idx=4, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=3, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
+            GPIOPin(idx=4, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
         ]
-        modes_iter = iter([GPIOPinMode.IN, GPIOPinMode.IN, GPIOPinMode.IN])
+        modes = [GPIOPinMode.IN, GPIOPinMode.IN, GPIOPinMode.IN]
 
         previous_states = [GPIOPinState.HIGH, GPIOPinState.LOW, None]
         bar._gpio_states = previous_states
         assert bar._gpio_states == previous_states
 
         # Act
-        bar._change_pin_modes(pins, modes_iter)
+        bar._change_pin_modes(pins, modes)
 
         # Assert
         expected_modes = [GPIOPinMode.IN, GPIOPinMode.IN, GPIOPinMode.IN]
@@ -3286,9 +3286,9 @@ class GPIOPinBarEmulatorTests(unittest.TestCase):
         ]
         bar = GPIOPinBarEmulator(pin_assignment, initial_addressing=PinAddressing.GPIO)
         pins = [
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=3, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
-            _GPIOPin(idx=4, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=3, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
+            GPIOPin(idx=4, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
         ]
 
         previous_states = [GPIOPinState.HIGH, GPIOPinState.LOW, None]
@@ -3386,8 +3386,8 @@ class GPIOPinBarEmulatorTests(unittest.TestCase):
         ]
         bar = GPIOPinBarEmulator(pin_assignment, initial_addressing=PinAddressing.GPIO)
         pins = [
-            _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
-            _GPIOPin(idx=3, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
+            GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=0, mode=GPIOPinMode.OUT),
+            GPIOPin(idx=3, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.IN),
         ]
 
         previous_states = [GPIOPinState.HIGH, GPIOPinState.LOW, None]
@@ -3638,4 +3638,3 @@ class GPIOPinBarEmulatorTests(unittest.TestCase):
         # Assert
         expected_states = [GPIOPinState.LOW, GPIOPinState.LOW, GPIOPinState.LOW]
         self.assertEqual(expected_states, bar._gpio_states)
-
