@@ -34,10 +34,10 @@ class RPiGPIOPinBarTests(unittest.TestCase):
             _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
             _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
-        new_modes_it = iter([GPIOPinMode.OUT, GPIOPinMode.OFF, GPIOPinMode.IN])
+        new_modes = [GPIOPinMode.OUT, GPIOPinMode.OFF, GPIOPinMode.IN]
 
         # Act
-        bar._change_pin_modes(pins=pins, new_modes_iterator=new_modes_it)
+        bar._change_pin_modes(pins=pins, new_modes=new_modes)
 
         # Assert
         expected_modes = [GPIOPinMode.OUT, GPIOPinMode.OFF, GPIOPinMode.IN]
@@ -59,10 +59,10 @@ class RPiGPIOPinBarTests(unittest.TestCase):
             _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
             _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
         ]
-        new_modes_it = iter([GPIOPinMode.OFF, GPIOPinMode.IN, GPIOPinMode.OUT])
+        new_modes = [GPIOPinMode.OFF, GPIOPinMode.IN, GPIOPinMode.OUT]
 
         # Act
-        bar._change_pin_modes(pins=pins, new_modes_iterator=new_modes_it)
+        bar._change_pin_modes(pins=pins, new_modes=new_modes)
 
         # Assert
         cleanup_mock.assert_not_called()
@@ -82,10 +82,10 @@ class RPiGPIOPinBarTests(unittest.TestCase):
             _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
             _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
-        new_modes_it = iter([GPIOPinMode.OFF, GPIOPinMode.IN, GPIOPinMode.OUT])
+        new_modes = [GPIOPinMode.OFF, GPIOPinMode.IN, GPIOPinMode.OUT]
 
         # Act
-        bar._change_pin_modes(pins=pins, new_modes_iterator=new_modes_it)
+        bar._change_pin_modes(pins=pins, new_modes=new_modes)
 
         # Assert
         expected_calls = [
@@ -111,10 +111,10 @@ class RPiGPIOPinBarTests(unittest.TestCase):
             _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
             _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
-        new_modes_it = iter([GPIOPinMode.OFF, GPIOPinMode.OUT, GPIOPinMode.IN])
+        new_modes = [GPIOPinMode.OFF, GPIOPinMode.OUT, GPIOPinMode.IN]
 
         # Act
-        bar._change_pin_modes(pins=pins, new_modes_iterator=new_modes_it)
+        bar._change_pin_modes(pins=pins, new_modes=new_modes)
 
         # Assert
         cleanup_mock.assert_not_called()
@@ -134,10 +134,10 @@ class RPiGPIOPinBarTests(unittest.TestCase):
             _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
             _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
-        new_modes_it = iter([GPIOPinMode.OFF, GPIOPinMode.OFF, GPIOPinMode.OFF])
+        new_modes = [GPIOPinMode.OFF, GPIOPinMode.OFF, GPIOPinMode.OFF]
 
         # Act
-        bar._change_pin_modes(pins=pins, new_modes_iterator=new_modes_it)
+        bar._change_pin_modes(pins=pins, new_modes=new_modes)
 
         # Assert
         setup_mock.assert_not_called()
@@ -157,10 +157,10 @@ class RPiGPIOPinBarTests(unittest.TestCase):
             _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
             _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
-        new_modes_it = iter([GPIOPinMode.IN, GPIOPinMode.IN, GPIOPinMode.OUT])
+        new_modes = [GPIOPinMode.IN, GPIOPinMode.IN, GPIOPinMode.OUT]
 
         # Act
-        bar._change_pin_modes(pins=pins, new_modes_iterator=new_modes_it)
+        bar._change_pin_modes(pins=pins, new_modes=new_modes)
 
         # Assert
         expected_calls = [
@@ -186,10 +186,10 @@ class RPiGPIOPinBarTests(unittest.TestCase):
             _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OFF),
             _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.OFF),
         ]
-        new_modes_it = iter([GPIOPinMode.IN_PULL_UP, GPIOPinMode.IN, GPIOPinMode.IN_PULL_DOWN])
+        new_modes = [GPIOPinMode.IN_PULL_UP, GPIOPinMode.IN, GPIOPinMode.IN_PULL_DOWN]
 
         # Act
-        bar._change_pin_modes(pins=pins, new_modes_iterator=new_modes_it)
+        bar._change_pin_modes(pins=pins, new_modes=new_modes)
 
         # Assert
         expected_calls = [
@@ -215,10 +215,10 @@ class RPiGPIOPinBarTests(unittest.TestCase):
             _GPIOPin(idx=1, type=PinType.GPIO, gpio_idx=1, mode=GPIOPinMode.OUT),
             _GPIOPin(idx=2, type=PinType.GPIO, gpio_idx=2, mode=GPIOPinMode.IN),
         ]
-        new_modes_it = iter([GPIOPinMode.OFF, GPIOPinMode.OUT, GPIOPinMode.IN])
+        new_modes = [GPIOPinMode.OFF, GPIOPinMode.OUT, GPIOPinMode.IN]
 
         # Act
-        bar._change_pin_modes(pins=pins, new_modes_iterator=new_modes_it)
+        bar._change_pin_modes(pins=pins, new_modes=new_modes)
 
         # Assert
         setup_mock.assert_not_called()

@@ -77,9 +77,7 @@ class RPiGPIOPinBar(GPIOPinBar):
             GPIOPinState.LOW: GPIO.LOW,
         }
 
-    def _change_pin_modes(self, pins: List[_GPIOPin], new_modes_iterator: Iterator[GPIOPinMode]):
-        new_modes = [next(new_modes_iterator) for _ in pins]
-
+    def _change_pin_modes(self, pins: List[_GPIOPin], new_modes: List[GPIOPinMode]):
         pins_and_new_modes = zip(pins, new_modes)
         pins_and_new_modes = [(pin, new_mode) for pin, new_mode in pins_and_new_modes
                               if pin.mode is not new_mode]

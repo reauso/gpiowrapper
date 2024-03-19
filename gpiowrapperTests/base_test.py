@@ -6,7 +6,7 @@ from parameterized import parameterized
 
 from gpiowrapper import GPIOPinState, GPIOPinMode, PinAddressing, PinType, GPIOPinBarEmulator
 from gpiowrapper.base import PinBar, _Pin, _GPIOPin, GPIOPinBar, ModeIsOffError, PinTypeError, \
-    PinBarError
+    PinBarError, ModeValueValidator, IndexValidator, StateValueValidator
 from gpiowrapperTests.useful_test_util import ExtendedTestCase
 
 
@@ -381,8 +381,8 @@ class GPIOPinBarTests(ExtendedTestCase):
             self.assertEqual(GPIOPinMode.OFF, pin.mode)
 
 
-class GPIOPinBarIndexValidatorTests(ExtendedTestCase):
-    class_path = f'{GPIOPinBar.__module__}.{GPIOPinBar.__name__}'
+class IndexValidatorTests(ExtendedTestCase):
+    class_path = f'{IndexValidator.__module__}.{IndexValidator.__name__}'
 
     @parameterized.expand([[i] for i in range(5)])
     def test_validate_index_item__IntIndexInBounds__NoIndexError(self, item: int):
@@ -393,18 +393,18 @@ class GPIOPinBarIndexValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(IndexError):
-            _ = GPIOPinBar._IndexValidator.validate(item, offset, length, addressing)
+            IndexValidator.validate(item, offset, length, addressing)
 
     def test_validate_index_item__IntIndexOutsideBounds__RaisesIndexError(self):
         # Arrange
         offset = 0
         length = 5
-        addressing = PinAddressing.PinBar
+        pin_bar = MagicMock()
 
         # Act & Assert
         expected_regex = rf'index out of range for {PinAddressing.__name__}.\w*'
         with self.assertRaisesRegex(IndexError, expected_regex):
-            _ = GPIOPinBar._IndexValidator.validate(6, offset, length, addressing)
+            IndexValidator.validate(6, offset, length, pin_bar)
 
     @parameterized.expand([[i + 10] for i in range(5)])
     def test_validate_index_item__IntIndexInBoundsWithOffset__NoIndexError(self, item: int):
@@ -415,7 +415,7 @@ class GPIOPinBarIndexValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(IndexError):
-            _ = GPIOPinBar._IndexValidator.validate(item, offset, length, addressing)
+            IndexValidator.validate(item, offset, length, addressing)
 
     @parameterized.expand([
         [0],
@@ -428,12 +428,12 @@ class GPIOPinBarIndexValidatorTests(ExtendedTestCase):
         # Arrange
         offset = 10
         length = 5
-        addressing = PinAddressing.PinBar
+        pin_bar = MagicMock()
 
         # Act & Assert
         expected_regex = rf'index out of range for {PinAddressing.__name__}.\w*'
         with self.assertRaisesRegex(IndexError, expected_regex):
-            _ = GPIOPinBar._IndexValidator.validate(item, offset, length, addressing)
+            IndexValidator.validate(item, offset, length, pin_bar)
 
     @parameterized.expand([
         [slice(None, None, None)],
@@ -455,7 +455,7 @@ class GPIOPinBarIndexValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(TypeError):
-            _ = GPIOPinBar._IndexValidator.validate(item, offset, length, addressing)
+            IndexValidator.validate(item, offset, length, addressing)
 
     @parameterized.expand([
         [slice('start', 4, 1)],
@@ -474,7 +474,7 @@ class GPIOPinBarIndexValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = r'slice indices must be integers or None or have an __index__ method'
         with self.assertRaisesRegex(TypeError, expected_regex):
-            _ = GPIOPinBar._IndexValidator.validate(item, offset, length, addressing)
+            IndexValidator.validate(item, offset, length, addressing)
 
     def test_validate_index_item__IntListIndexInBounds__NoIndexError(self):
         # Arrange
@@ -484,18 +484,19 @@ class GPIOPinBarIndexValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(IndexError):
-            _ = GPIOPinBar._IndexValidator.validate([1, 3, 4], offset, length, addressing)
+            IndexValidator.validate([1, 3, 4], offset, length, addressing)
 
     def test_validate_index_item__IntListIndexOutsideBounds__RaisesIndexError(self):
         # Arrange
         offset = 0
         length = 5
-        addressing = PinAddressing.PinBar
+        pin_bar = MagicMock()
+        pin_bar.addressing = PinAddressing.GPIO
 
         # Act & Assert
         expected_regex = rf'index out of range for {PinAddressing.__name__}.\w* at position \d*'
         with self.assertRaisesRegex(IndexError, expected_regex):
-            _ = GPIOPinBar._IndexValidator.validate([1, 3, 13, 4], offset, length, addressing)
+            IndexValidator.validate([1, 3, 13, 4], offset, length, pin_bar)
 
     @parameterized.expand([[[i + 10]] for i in range(5)])
     def test_validate_index_item__IntListIndexInBoundsWithOffset__NoIndexError(self, item: List[int]):
@@ -507,7 +508,7 @@ class GPIOPinBarIndexValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(IndexError):
-            _ = GPIOPinBar._IndexValidator.validate(item, offset, length, addressing)
+            IndexValidator.validate(item, offset, length, addressing)
 
     @parameterized.expand([
         [[0]],
@@ -520,12 +521,13 @@ class GPIOPinBarIndexValidatorTests(ExtendedTestCase):
         # Arrange
         offset = 10
         length = 5
-        addressing = PinAddressing.PinBar
+        pin_bar = MagicMock()
+        pin_bar.addressing = PinAddressing.GPIO
 
         # Act & Assert
         expected_regex = rf'index out of range for {PinAddressing.__name__}.\w* at position \d*'
         with self.assertRaisesRegex(IndexError, expected_regex):
-            _ = GPIOPinBar._IndexValidator.validate(item, offset, length, addressing)
+            IndexValidator.validate(item, offset, length, pin_bar)
 
     def test_validate_index_item__ListIndexWithInvalidEntryType__RaisesTypeError(self):
         # Arrange
@@ -536,7 +538,7 @@ class GPIOPinBarIndexValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = r'list indices must be integers or have an __index__ method. Found type \w* at position \d*'
         with self.assertRaisesRegex(TypeError, expected_regex):
-            _ = GPIOPinBar._IndexValidator.validate([2, 3, 'test'], offset, length, addressing)
+            IndexValidator.validate([2, 3, 'test'], offset, length, addressing)
 
     @parameterized.expand([
         [None],
@@ -553,13 +555,12 @@ class GPIOPinBarIndexValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = r'index must be integer, slice or list, not \w*'
         with self.assertRaisesRegex(TypeError, expected_regex):
-            _ = GPIOPinBar._IndexValidator.validate(item, offset, length, addressing)
+            IndexValidator.validate(item, offset, length, addressing)
 
 
-class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
-    class_path = (f'{GPIOPinBar.__module__}.{GPIOPinBar.__name__}.'
-                  f'{GPIOPinBar._ModeValueValidator.__name__}')
-    cls = GPIOPinBar._ModeValueValidator
+class ModeValueValidatorTests(ExtendedTestCase):
+    class_path = f'{ModeValueValidator.__module__}.{ModeValueValidator.__name__}'
+    cls = ModeValueValidator
 
     @parameterized.expand([
         [GPIOPinMode.OUT],
@@ -577,7 +578,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
         # Act
         for index_type in index_types:
             try:
-                GPIOPinBar._ModeValueValidator.validate(
+                ModeValueValidator.validate(
                     value=value, index_type=index_type, considered_pins=considered_pins)
             except (ValueError, PinTypeError, ModeIsOffError):
                 pass
@@ -604,7 +605,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
 
         # Act
         try:
-            GPIOPinBar._ModeValueValidator.validate(
+            ModeValueValidator.validate(
                 value=value, index_type=int, considered_pins=considered_pins)
         except (ValueError, PinTypeError, ModeIsOffError):
             pass
@@ -626,7 +627,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
 
         # Act
         try:
-            GPIOPinBar._ModeValueValidator.validate(
+            ModeValueValidator.validate(
                 value=value, index_type=slice, considered_pins=considered_pins)
         except (ValueError, PinTypeError, ModeIsOffError):
             pass
@@ -648,7 +649,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
 
         # Act
         try:
-            GPIOPinBar._ModeValueValidator.validate(
+            ModeValueValidator.validate(
                 value=value, index_type=list, considered_pins=considered_pins)
         except (ValueError, PinTypeError, ModeIsOffError):
             pass
@@ -659,19 +660,19 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
     def test_validate_type__ValidStateType__NoTypeError(self):
         # Act & Assert
         with self.assertNotRaised(TypeError):
-            GPIOPinBar._ModeValueValidator._validate_type(GPIOPinMode)
+            ModeValueValidator._validate_type(GPIOPinMode)
         with self.assertNotRaised(TypeError):
-            GPIOPinBar._ModeValueValidator._validate_type(list)
+            ModeValueValidator._validate_type(list)
 
     def test_validate_type__InvalidStateType__RaiseTypeError(self):
         # Act & Assert
         expected_regex = rf'value must be {GPIOPinMode.__name__} or list, not str'
         with self.assertRaisesRegex(TypeError, expected_regex):
-            GPIOPinBar._ModeValueValidator._validate_type(str)
+            ModeValueValidator._validate_type(str)
 
         expected_regex = rf'value must be {GPIOPinMode.__name__} or list, not object'
         with self.assertRaisesRegex(TypeError, expected_regex):
-            GPIOPinBar._ModeValueValidator._validate_type(object)
+            ModeValueValidator._validate_type(object)
 
     def test_validate_for_int_index__ValueIsState__NoValueError(self):
         # Arrange
@@ -683,7 +684,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(ValueError):
-            GPIOPinBar._ModeValueValidator._validate_for_int_index(value=value, considered_pins=considered_pins)
+            ModeValueValidator._validate_for_int_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_int_index__ValueIsList__RaisesValueError(self):
         # Arrange
@@ -696,7 +697,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = r'setting an array element with a sequence.'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._ModeValueValidator._validate_for_int_index(value=value, considered_pins=considered_pins)
+            ModeValueValidator._validate_for_int_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsState__NoValueError(self):
         # Arrange
@@ -709,7 +710,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(ValueError):
-            GPIOPinBar._ModeValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            ModeValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsListWithInvalidEntryType__RaisesValueError(self):
         # Arrange
@@ -722,7 +723,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'list value must be of type {GPIOPinMode.__name__}, NoneType. Found type \w* at position \d*'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._ModeValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            ModeValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsListWithModeEntryAddressingGPIOPin__NoPinTypeError(self):
         # Arrange
@@ -734,7 +735,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(TypeError):
-            GPIOPinBar._ModeValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            ModeValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsListWithModeEntryAddressingNotGPIOPin__RaisesPinTypeError(self):
         # Arrange
@@ -747,7 +748,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'unable to assign {GPIOPinMode.__name__}.\w* at position \d* to pin of type {PinType.GROUND}'
         with self.assertRaisesRegex(PinTypeError, expected_regex):
-            GPIOPinBar._ModeValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            ModeValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsListWithNoneEntryAddressingGPIOPin__RaisesPinTypeError(self):
         # Arrange
@@ -760,7 +761,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'unable to assign None at position \d* to pin of type {PinType.GPIO}'
         with self.assertRaisesRegex(PinTypeError, expected_regex):
-            GPIOPinBar._ModeValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            ModeValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsListWithNoneEntryAddressingNotGPIOPin__NoPinTypeError(self):
         # Arrange
@@ -772,7 +773,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(TypeError):
-            GPIOPinBar._ModeValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            ModeValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsListWithLesserSize__RaisesValueError(self):
         # Arrange
@@ -786,7 +787,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'could not broadcast input array from size 2 into size 3'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._ModeValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            ModeValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsListWithGreaterSize__RaisesValueError(self):
         # Arrange
@@ -798,7 +799,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'could not broadcast input array from size 2 into size 1'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._ModeValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            ModeValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_list_index__ValueIsState__NoValueError(self):
         # Arrange
@@ -810,7 +811,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(ValueError):
-            GPIOPinBar._ModeValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
+            ModeValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_list_index__ValueIsListWithInvalidEntryType__RaisesValueError(self):
         # Arrange
@@ -823,7 +824,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'list value must be of type {GPIOPinMode.__name__}. Found type \w* at position \d*'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._ModeValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
+            ModeValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_list_index__ValueIsListWithOnlyModeEntries__NoValueError(self):
         # Arrange
@@ -835,7 +836,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(ValueError):
-            GPIOPinBar._ModeValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
+            ModeValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_list_index__ValueIsListWithNoneEntry__RaisesValueError(self):
         # Arrange
@@ -848,7 +849,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'list value must be of type {GPIOPinMode.__name__}. Found type \w* at position \d*'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._ModeValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
+            ModeValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_list_index__ValueIsListWithLesserSize__RaisesValueError(self):
         # Arrange
@@ -862,7 +863,7 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'could not broadcast input array from size 2 into size 3'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._ModeValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
+            ModeValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_list_index__ValueIsListWithGreaterSize__RaisesValueError(self):
         # Arrange
@@ -874,13 +875,12 @@ class GPIOPinBarModeValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'could not broadcast input array from size 2 into size 1'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._ModeValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
+            ModeValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
 
 
-class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
-    class_path = (f'{GPIOPinBar.__module__}.{GPIOPinBar.__name__}.'
-                  f'{GPIOPinBar._StateValueValidator.__name__}')
-    cls = GPIOPinBar._StateValueValidator
+class StateValueValidatorTests(ExtendedTestCase):
+    class_path = f'{StateValueValidator.__module__}.{StateValueValidator.__name__}'
+    cls = StateValueValidator
 
     @parameterized.expand([
         [GPIOPinState.LOW],
@@ -898,7 +898,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
         # Act
         for index_type in index_types:
             try:
-                GPIOPinBar._StateValueValidator.validate(
+                StateValueValidator.validate(
                     value=value, index_type=index_type, considered_pins=considered_pins)
             except (ValueError, PinTypeError, ModeIsOffError):
                 pass
@@ -925,7 +925,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
 
         # Act
         try:
-            GPIOPinBar._StateValueValidator.validate(
+            StateValueValidator.validate(
                 value=value, index_type=int, considered_pins=considered_pins)
         except (ValueError, PinTypeError, ModeIsOffError):
             pass
@@ -947,7 +947,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
 
         # Act
         try:
-            GPIOPinBar._StateValueValidator.validate(
+            StateValueValidator.validate(
                 value=value, index_type=slice, considered_pins=considered_pins)
         except (ValueError, PinTypeError, ModeIsOffError):
             pass
@@ -969,7 +969,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
 
         # Act
         try:
-            GPIOPinBar._StateValueValidator.validate(
+            StateValueValidator.validate(
                 value=value, index_type=list, considered_pins=considered_pins)
         except (ValueError, PinTypeError, ModeIsOffError):
             pass
@@ -980,19 +980,19 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
     def test_validate_type__ValidStateType__NoTypeError(self):
         # Act & Assert
         with self.assertNotRaised(TypeError):
-            GPIOPinBar._StateValueValidator._validate_type(GPIOPinState)
+            StateValueValidator._validate_type(GPIOPinState)
         with self.assertNotRaised(TypeError):
-            GPIOPinBar._StateValueValidator._validate_type(list)
+            StateValueValidator._validate_type(list)
 
     def test_validate_type__InvalidStateType__RaiseTypeError(self):
         # Act & Assert
         expected_regex = rf'value must be {GPIOPinState.__name__} or list, not str'
         with self.assertRaisesRegex(TypeError, expected_regex):
-            GPIOPinBar._StateValueValidator._validate_type(str)
+            StateValueValidator._validate_type(str)
 
         expected_regex = rf'value must be {GPIOPinState.__name__} or list, not object'
         with self.assertRaisesRegex(TypeError, expected_regex):
-            GPIOPinBar._StateValueValidator._validate_type(object)
+            StateValueValidator._validate_type(object)
 
     def test_validate_for_int_index__ValueIsState__NoValueError(self):
         # Arrange
@@ -1004,7 +1004,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(ValueError):
-            GPIOPinBar._StateValueValidator._validate_for_int_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_int_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_int_index__ValueIsList__RaisesValueError(self):
         # Arrange
@@ -1017,7 +1017,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = r'setting an array element with a sequence.'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._StateValueValidator._validate_for_int_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_int_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsState__NoValueError(self):
         # Arrange
@@ -1030,7 +1030,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(ValueError):
-            GPIOPinBar._StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsListWithInvalidEntryType__RaisesValueError(self):
         # Arrange
@@ -1043,7 +1043,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'list value must be of type {GPIOPinState.__name__}, NoneType. Found type \w* at position \d*'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsListWithModeEntryAddressingGPIOPinWithModeNotOff__NoPinTypeError(self):
         # Arrange
@@ -1055,7 +1055,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(PinTypeError):
-            GPIOPinBar._StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsListWithModeEntryAddressingGPIOPinWithModeOff__RaisesModeIsOffError(self):
         # Arrange
@@ -1069,7 +1069,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
         expected_regex = (rf'unable to assign {GPIOPinState.__name__}.\w* at position \d* to pin of type '
                           rf'{PinType.GPIO} with {GPIOPinMode.OFF}')
         with self.assertRaisesRegex(ModeIsOffError, expected_regex):
-            GPIOPinBar._StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsListWithModeEntryAddressingNotGPIOPin__RaisesPinTypeError(self):
         # Arrange
@@ -1082,7 +1082,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'unable to assign {GPIOPinState.__name__}.\w* at position \d* to pin of type {PinType.GROUND}'
         with self.assertRaisesRegex(PinTypeError, expected_regex):
-            GPIOPinBar._StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsListWithNoneEntryAddressingGPIOPinWithModeNotOff__RaisesValueError(
             self):
@@ -1096,7 +1096,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'unable to assign None at position \d* to pin of type {PinType.GPIO} with {GPIOPinMode.IN}'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsListWithNoneEntryAddressingGPIOPinWithModeOff__NoModeIsOffError(self):
         # Arrange
@@ -1108,7 +1108,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(ModeIsOffError):
-            GPIOPinBar._StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsListWithNoneEntryAddressingNotGPIOPin__NoPinTypeError(self):
         # Arrange
@@ -1120,7 +1120,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(PinTypeError):
-            GPIOPinBar._StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsListWithLesserSize__RaisesValueError(self):
         # Arrange
@@ -1134,7 +1134,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'could not broadcast input array from size 2 into size 3'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_slice_index__ValueIsListWithGreaterSize__RaisesValueError(self):
         # Arrange
@@ -1146,7 +1146,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'could not broadcast input array from size 2 into size 1'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_slice_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_list_index__ValueIsState__NoValueError(self):
         # Arrange
@@ -1158,7 +1158,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(ValueError):
-            GPIOPinBar._StateValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_list_index__ValueIsListWithInvalidEntryType__RaisesValueError(self):
         # Arrange
@@ -1171,7 +1171,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'list value must be of type {GPIOPinState.__name__}. Found type \w* at position \d*'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._StateValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_list_index__ValueIsListWithOnlyModeEntries__NoValueError(self):
         # Arrange
@@ -1183,7 +1183,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
 
         # Act & Assert
         with self.assertNotRaised(ValueError):
-            GPIOPinBar._StateValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_list_index__ValueIsListWithNoneEntry__RaisesValueError(self):
         # Arrange
@@ -1196,7 +1196,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'list value must be of type {GPIOPinState.__name__}. Found type \w* at position \d*'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._StateValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_list_index__ValueIsListWithLesserSize__RaisesValueError(self):
         # Arrange
@@ -1210,7 +1210,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'could not broadcast input array from size 2 into size 3'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._StateValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
 
     def test_validate_for_list_index__ValueIsListWithGreaterSize__RaisesValueError(self):
         # Arrange
@@ -1222,7 +1222,7 @@ class GPIOPinBarStateValueValidatorTests(ExtendedTestCase):
         # Act & Assert
         expected_regex = rf'could not broadcast input array from size 2 into size 1'
         with self.assertRaisesRegex(ValueError, expected_regex):
-            GPIOPinBar._StateValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
+            StateValueValidator._validate_for_list_index(value=value, considered_pins=considered_pins)
 
 
 @patch.multiple(GPIOPinBar, __abstractmethods__=set())
@@ -1237,7 +1237,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         [[2, 4, 30]],
         ['test'],
     ])
-    @patch(f'{class_path}.{GPIOPinBar._IndexValidator.__name__}', wraps=GPIOPinBar._IndexValidator)
+    @patch(f'{IndexValidator.__module__}.{IndexValidator.__name__}', wraps=IndexValidator)
     def test_modes_getter__Always__CallsValidateIndexItem(self, item, index_validator_mock: MagicMock):
         # Arrange
         pin_assignment = [
@@ -1261,7 +1261,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
             'item': item,
             'offset': bar._addressing_offset,
             'length': bar._addressing_array_length,
-            'addressing': bar.addressing,
+            'pin_bar': bar,
         }
         index_validator_mock.validate.assert_called_once_with(**expected_parameters)
 
@@ -1555,7 +1555,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         [[2, 4, 30]],
         ['test'],
     ])
-    @patch(f'{class_path}.{GPIOPinBar._IndexValidator.__name__}', wraps=GPIOPinBar._IndexValidator)
+    @patch(f'{IndexValidator.__module__}.{IndexValidator.__name__}', wraps=IndexValidator)
     def test_modes_setter__Always__CallsValidateIndexItem(self, item, index_validator_mock: MagicMock):
         # Arrange
         pin_assignment = [
@@ -1579,7 +1579,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
             'item': item,
             'offset': bar._addressing_offset,
             'length': bar._addressing_array_length,
-            'addressing': bar.addressing,
+            'pin_bar': bar,
         }
         index_validator_mock.validate.assert_called_once_with(**expected_parameters)
 
@@ -1589,8 +1589,7 @@ class GPIOPinBarModeTests(ExtendedTestCase):
         [[GPIOPinMode.OUT, GPIOPinMode.OFF]],
         ['test'],
     ])
-    @patch(f'{class_path}.{GPIOPinBar._ModeValueValidator.__name__}',
-           wraps=GPIOPinBar._ModeValueValidator)
+    @patch(f'{ModeValueValidator.__module__}.{ModeValueValidator.__name__}', wraps=ModeValueValidator)
     def test_modes_setter__Always__CallsValidateValue(self, value, value_validator_mock: MagicMock):
         # Arrange
         pin_assignment = [
@@ -2029,7 +2028,7 @@ class GPIOPinBarStateTests(ExtendedTestCase):
         [[2, 4, 30]],
         ['test'],
     ])
-    @patch(f'{class_path}.{GPIOPinBar._IndexValidator.__name__}', wraps=GPIOPinBar._IndexValidator)
+    @patch(f'{IndexValidator.__module__}.{IndexValidator.__name__}', wraps=IndexValidator)
     def test_states_getter__Always__CallsValidateIndexItem(self, item, index_validator_mock: MagicMock):
         # Arrange
         pin_assignment = [
@@ -2053,7 +2052,7 @@ class GPIOPinBarStateTests(ExtendedTestCase):
             'item': item,
             'offset': bar._addressing_offset,
             'length': bar._addressing_array_length,
-            'addressing': bar.addressing,
+            'pin_bar': bar,
         }
         index_validator_mock.validate.assert_called_once_with(**expected_parameters)
 
@@ -2489,7 +2488,7 @@ class GPIOPinBarStateTests(ExtendedTestCase):
         [[2, 4, 30]],
         ['test'],
     ])
-    @patch(f'{class_path}.{GPIOPinBar._IndexValidator.__name__}', wraps=GPIOPinBar._IndexValidator)
+    @patch(f'{IndexValidator.__module__}.{IndexValidator.__name__}', wraps=IndexValidator)
     def test_states_setter__Always__CallsValidateIndexItem(self, item, index_validator_mock: MagicMock):
         # Arrange
         pin_assignment = [
@@ -2513,7 +2512,7 @@ class GPIOPinBarStateTests(ExtendedTestCase):
             'item': item,
             'offset': bar._addressing_offset,
             'length': bar._addressing_array_length,
-            'addressing': bar.addressing,
+            'pin_bar': bar,
         }
         index_validator_mock.validate.assert_called_once_with(**expected_parameters)
 
@@ -2523,8 +2522,7 @@ class GPIOPinBarStateTests(ExtendedTestCase):
         [[GPIOPinState.LOW, GPIOPinState.HIGH]],
         ['test'],
     ])
-    @patch(f'{class_path}.{GPIOPinBar._StateValueValidator.__name__}',
-           wraps=GPIOPinBar._StateValueValidator)
+    @patch(f'{StateValueValidator.__module__}.{StateValueValidator.__name__}', wraps=StateValueValidator)
     def test_states_setter__GPIOModesAreNotOff__CallsValidateValue(self, value, value_validator_mock: MagicMock):
         # Arrange
         pin_assignment = [

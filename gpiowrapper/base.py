@@ -242,7 +242,9 @@ class GPIOPinBar(PinBar, ABC):
         self._gpio_pins: List[_GPIOPin] = [pin for pin in self._pins if isinstance(pin, _GPIOPin)]
         self._gpio_pins.sort(key=lambda x: x.gpio_idx)
 
-        # TODO add index and value validator attributes to allow for dynamic validation through subclassing
+        self._index_validator_class: IndexValidator.__class__ = IndexValidator
+        self._mode_validator_class: ModeValueValidator.__class__ = ModeValueValidator
+        self._state_validator_class: StateValueValidator.__class__ = StateValueValidator
 
         self.addressing = initial_addressing
 
@@ -321,220 +323,6 @@ class GPIOPinBar(PinBar, ABC):
         """
         return self._addressing_array_length
 
-    class _IndexValidator:
-        """ Validator for index items that validates valid types and values. """
-
-        @classmethod
-        def _validation_mapping(cls) -> dict:
-            return {
-                int: cls.validate_int_index,
-                slice: cls.validate_slice_index,
-                list: cls.validate_list_index,
-            }
-
-        @classmethod
-        def validate(
-                cls,
-                item: Any,
-                offset: int,
-                length: int,
-                addressing: PinAddressing  # TODO change to GPIOPinBar object
-        ) -> None:
-            """
-            Validates both type and value of the given item as index.
-            :param item: The index item.
-            :param offset: The current offset. Depends on the current pin addressing used.
-            :param length: The length of the pin array. Depends on the current pin addressing used.
-            :param addressing: The current pin addressing used.
-            """
-            cls.validate_index_type(type(item))
-            validation_func = cls._validation_mapping()[type(item)]
-
-            if validation_func is not None:
-                # noinspection PyArgumentList
-                validation_func(item=item, offset=offset, length=length, addressing=addressing)
-
-        @classmethod
-        def validate_index_type(cls, item_type):
-            """ Validates the type of the index item. """
-            if item_type not in [int, slice, list]:
-                raise TypeError(f'index must be integer, slice or list, not {item_type.__name__}')
-
-        @classmethod
-        def validate_int_index(cls, item: int, offset: int, length: int, addressing: PinAddressing, **_):
-            if not offset <= item < offset + length:
-                raise IndexError(f'index out of range for {PinAddressing.__name__}.{str(addressing)}')
-
-        @classmethod
-        def validate_slice_index(cls, item: slice, **_):
-            if (
-                    (item.start is not None and not isinstance(item.start, int)) or
-                    (item.stop is not None and not isinstance(item.stop, int)) or
-                    (item.step is not None and not isinstance(item.step, int))
-            ):
-                raise TypeError(f'slice indices must be integers or None or have an __index__ method')
-
-        @classmethod
-        def validate_list_index(cls, item: list, offset: int, length: int, addressing: PinAddressing, **_):
-            for i, index in enumerate(item):
-                if isinstance(index, int):
-                    try:
-                        cls.validate_int_index(index, offset, length, addressing)
-                    except IndexError:
-                        raise IndexError(
-                            f'index out of range for {PinAddressing.__name__}.{str(addressing)} at position {i}'
-                        ) from None
-                else:
-                    raise TypeError(f'list indices must be integers or have an __index__ method. '
-                                    f'Found type {type(index).__name__} at position {i}')
-
-    class _ValueValidator(ABC):
-        """
-        Abstract base class to validate values set for the gpio pin attributes.
-        """
-        @classmethod
-        def _validation_mapping(cls):
-            """ Gets the validation method for each index type. """
-            return {
-                int: cls._validate_for_int_index,
-                slice: cls._validate_for_slice_index,
-                list: cls._validate_for_list_index,
-            }
-
-        @classmethod
-        def validate(cls, value, index_type, considered_pins: List[_Pin]):
-            """
-            Validates both type and value of the given value.
-            :param value: The value to validate.
-            :param index_type: The index type used to address the list.
-            :param considered_pins: A list of the considered pins of the current operation.
-            """
-            cls._validate_type(type(value))
-
-            validation_func = cls._validation_mapping()[index_type]
-            if validation_func is not None:
-                # noinspection PyArgumentList
-                validation_func(value=value, considered_pins=considered_pins)
-
-        @classmethod
-        @abstractmethod
-        def _validate_type(cls, value_type):
-            """ Validates the type of the value. """
-            pass
-
-        @classmethod
-        def _validate_for_int_index(cls, value, **_):
-            """ Validates the value for an int index. """
-            if isinstance(value, list):
-                raise ValueError('setting an array element with a sequence.')
-
-        @classmethod
-        def _validate_for_slice_index(cls, value, considered_pins: List[_Pin], **_):
-            """ Validates the value for a slice index. """
-            if isinstance(value, list):
-                cls._validate_list_size(considered_pins, value)
-                cls._validate_list_entries(value, considered_pins, none_allowed=True)
-
-        @classmethod
-        def _validate_for_list_index(cls, value, considered_pins: List[_Pin], **_):
-            """ Validates the value for a list index. """
-            if isinstance(value, list):
-                cls._validate_list_size(considered_pins, value)
-                cls._validate_list_entries(value, considered_pins, none_allowed=False)
-
-        @classmethod
-        def _validate_list_size(cls, considered_pins, value):
-            """ Validates that the number of values and the number of considered pins are the same. """
-            if len(value) is not len(considered_pins):
-                raise ValueError(
-                    f'could not broadcast input array from size {len(value)} into size {len(considered_pins)}')
-
-        @classmethod
-        def _validate_list_entries(cls, value, considered_pins: List[_Pin], none_allowed: bool) -> None:
-            """
-            Validates that the value list entries are valid for each individual pin type of the
-            considered pins.
-            :param value: The list of values to validate.
-            :param considered_pins: The considered pins by this operation.
-            :param none_allowed: If None values are allowed or not.
-            """
-            value_pin_zip = zip(value, considered_pins)
-            allowed_entry_types = cls._allowed_list_entry_types()
-            if none_allowed:
-                allowed_entry_types.append(NoneType)
-
-            for i, (v, pin) in enumerate(value_pin_zip):
-                if type(v) not in allowed_entry_types:
-                    allowed_entry_type_names = [i.__name__ for i in allowed_entry_types]
-                    msg = (f'list value must be of type {", ".join(allowed_entry_type_names)}. '
-                           f'Found type {type(v).__name__} at position {i}')
-                    raise ValueError(msg)
-
-                if (v is None and isinstance(pin, _GPIOPin)) or (v is not None and not isinstance(pin, _GPIOPin)):
-                    msg = f'unable to assign {v} at position {i} to pin of type {pin.type}'
-                    raise PinTypeError(msg)
-
-        @classmethod
-        @abstractmethod
-        def _allowed_list_entry_types(cls) -> List:
-            """ Gets a list of the allowed data types when the value to validate is a list. """
-            pass
-
-    class _ModeValueValidator(_ValueValidator):
-        """ The value validator when setting new gpio pin mode(s). """
-        @classmethod
-        def _validate_type(cls, value_type):
-            if value_type not in [GPIOPinMode, list]:
-                raise TypeError(f'value must be {GPIOPinMode.__name__} or list, not {value_type.__name__}')
-
-        @classmethod
-        def _allowed_list_entry_types(cls) -> List:
-            return [GPIOPinMode]
-
-    class _StateValueValidator(_ValueValidator):
-        """ The value validator when setting new gpio pin state(s). """
-        @classmethod
-        def _validate_type(cls, value_type):
-            if value_type not in [GPIOPinState, list]:
-                raise TypeError(f'value must be {GPIOPinState.__name__} or list, not {value_type.__name__}')
-
-        @classmethod
-        def _validate_list_entries(cls, value, considered_pins: List[_Pin], none_allowed: bool):
-            value_pin_zip = zip(value, considered_pins)
-            allowed_entry_types = cls._allowed_list_entry_types()
-            if none_allowed:
-                allowed_entry_types.append(NoneType)
-
-            for i, (v, pin) in enumerate(value_pin_zip):
-                if type(v) not in allowed_entry_types:
-                    allowed_entry_type_names = [i.__name__ for i in allowed_entry_types]
-                    msg = (f'list value must be of type {", ".join(allowed_entry_type_names)}. '
-                           f'Found type {type(v).__name__} at position {i}')
-                    raise ValueError(msg)
-
-                '''
-                v: GPIOPinState, pin: NoGPIO => PinTypeError
-                v: GPIOPinState, pin: GPIO, mode: off => ModeIsOffError
-                v: GPIOPinState, pin: GPIO, mode: on => NoError
-                v: None, pin: NoGPIO => NoError
-                v: None, pin: GPIO, mode: off => NoError
-                v: None, pin: GPIO, mode: on => ValueError
-                '''
-
-                msg = f'unable to assign {v} at position {i} to pin of type {pin.type}'
-                msg = f'{msg} with {pin.mode}' if isinstance(pin, _GPIOPin) else msg
-
-                if v is not None and not isinstance(pin, _GPIOPin):
-                    raise PinTypeError(msg)
-                elif v is not None and isinstance(pin, _GPIOPin) and pin.mode is GPIOPinMode.OFF:
-                    raise ModeIsOffError(msg)
-                elif v is None and isinstance(pin, _GPIOPin) and pin.mode is not GPIOPinMode.OFF:
-                    raise ValueError(msg)
-
-        @classmethod
-        def _allowed_list_entry_types(cls) -> List:
-            return [GPIOPinState]
-
     @IndexableProperty
     def modes(self, item) -> Union[Optional[GPIOPinMode], List[Optional[GPIOPinMode]]]:
         """
@@ -546,8 +334,8 @@ class GPIOPinBar(PinBar, ABC):
           a list of GPIOPinMode and None for slice indices where None represents that the corresponding pin is not
           a gpio pin, a list of GPIOPinMode for list indices.
         """
-        self._IndexValidator.validate(item=item, offset=self._addressing_offset,
-                                      length=self._addressing_array_length, addressing=self.addressing)
+        self._index_validator_class.validate(item=item, offset=self._addressing_offset,
+                                             length=self._addressing_array_length, pin_bar=self)
 
         item_pins = self._get_pins(item=item)
 
@@ -566,8 +354,8 @@ class GPIOPinBar(PinBar, ABC):
         :param value: The new value(s). Note that if you use a slice index and the slice is addressing
           pins that are not of type gpio, you have to pass a None value for these pins.
         """
-        self._IndexValidator.validate(item=key, offset=self._addressing_offset,
-                                      length=self._addressing_array_length, addressing=self.addressing)
+        self._index_validator_class.validate(item=key, offset=self._addressing_offset,
+                                             length=self._addressing_array_length, pin_bar=self)
 
         item_pins = self._get_pins(item=key)
         item_pins = [item_pins] if not isinstance(item_pins, list) else item_pins
@@ -575,25 +363,25 @@ class GPIOPinBar(PinBar, ABC):
         if not isinstance(key, slice):
             self._validate_pins_are_gpio(item_pins)
 
-        self._ModeValueValidator.validate(value=value, index_type=type(key), considered_pins=item_pins)
+        self._mode_validator_class.validate(value=value, index_type=type(key), considered_pins=item_pins)
 
         if isinstance(value, list):
             value = [v for v in value if v is not None]
 
         item_pins = [pin for pin in item_pins if isinstance(pin, _GPIOPin)]
-        value_it = iter(lambda: value, -1) if isinstance(value, GPIOPinMode) else iter(value)
+        new_values = [value for _ in item_pins] if isinstance(value, GPIOPinMode) else list(value)
 
-        self._change_pin_modes(item_pins, value_it)
+        self._change_pin_modes(item_pins, new_values)
 
-    def _change_pin_modes(self, pins: List[_GPIOPin], new_modes_iterator: Iterator[GPIOPinMode]):  # TODO iterator? change state uses list
+    def _change_pin_modes(self, pins: List[_GPIOPin], new_modes: List[GPIOPinMode]):
         """
         Change the modes of the given list of pins.
 
         :param pins: The pins of which the mode is to be changed.
-        :param new_modes_iterator: An iterator object which provides the new modes.
+        :param new_modes: A list object which provides the new modes.
         """
-        for pin in pins:
-            pin.mode = next(new_modes_iterator)
+        for pin, new_mode in zip(pins, new_modes):
+            pin.mode = new_mode
 
     @IndexableProperty
     def states(self, item) -> Union[Optional[GPIOPinState], List[Optional[GPIOPinState]]]:
@@ -606,8 +394,8 @@ class GPIOPinBar(PinBar, ABC):
           a list of GPIOPinState and None for slice indices where None represents that the corresponding pin is not
           a gpio pin or the gpio pin is in OFF mode, a list of GPIOPinState for list indices.
         """
-        self._IndexValidator.validate(item=item, offset=self._addressing_offset,
-                                      length=self._addressing_array_length, addressing=self.addressing)
+        self._index_validator_class.validate(item=item, offset=self._addressing_offset,
+                                             length=self._addressing_array_length, pin_bar=self)
 
         item_pins = self._get_pins(item=item)
         item_pins = [item_pins] if not isinstance(item_pins, list) else item_pins
@@ -648,8 +436,8 @@ class GPIOPinBar(PinBar, ABC):
           pins that are either not of type gpio or are in OFF mode, you have to pass a None value for
           these pins.
         """
-        self._IndexValidator.validate(item=key, offset=self._addressing_offset,
-                                      length=self._addressing_array_length, addressing=self.addressing)
+        self._index_validator_class.validate(item=key, offset=self._addressing_offset,
+                                             length=self._addressing_array_length, pin_bar=self)
 
         item_pins = self._get_pins(item=key)
         item_pins = [item_pins] if not isinstance(item_pins, list) else item_pins
@@ -659,7 +447,7 @@ class GPIOPinBar(PinBar, ABC):
             self._validate_pins_are_gpio(item_pins)
             self._validate_gpio_pin_modes_not_off(gpio_pins)
 
-        self._StateValueValidator.validate(value=value, index_type=type(key), considered_pins=item_pins)
+        self._state_validator_class.validate(value=value, index_type=type(key), considered_pins=item_pins)
 
         if isinstance(key, slice):
             gpio_pins = [pin for pin in gpio_pins if pin.mode is not GPIOPinMode.OFF]
@@ -717,8 +505,229 @@ class GPIOPinBar(PinBar, ABC):
 
     def reset_gpio_pins(self) -> None:
         """ Resets all pin modes of this pin bar. """
-        value_it = iter(lambda: GPIOPinMode.OFF, -1)
-        self._change_pin_modes(self._gpio_pins, value_it)
+        new_values = [GPIOPinMode.OFF for _ in self._gpio_pins]
+        self._change_pin_modes(self._gpio_pins, new_values)
+
+
+class IndexValidator:
+    """ Validator for index items that validates valid types and values. """
+
+    @classmethod
+    def _validation_mapping(cls) -> dict:
+        return {
+            int: cls.validate_int_index,
+            slice: cls.validate_slice_index,
+            list: cls.validate_list_index,
+        }
+
+    @classmethod
+    def validate(
+            cls,
+            item: Any,
+            offset: int,
+            length: int,
+            pin_bar: GPIOPinBar
+    ) -> None:
+        """
+        Validates both type and value of the given item as index.
+        :param item: The index item.
+        :param offset: The current offset. Depends on the current pin addressing used.
+        :param length: The length of the pin array. Depends on the current pin addressing used.
+        :param pin_bar: The current pin bar object used.
+        """
+        cls.validate_index_type(type(item))
+        validation_func = cls._validation_mapping()[type(item)]
+
+        if validation_func is not None:
+            # noinspection PyArgumentList
+            validation_func(item=item, offset=offset, length=length, pin_bar=pin_bar)
+
+    @classmethod
+    def validate_index_type(cls, item_type):
+        """ Validates the type of the index item. """
+        if item_type not in [int, slice, list]:
+            raise TypeError(f'index must be integer, slice or list, not {item_type.__name__}')
+
+    @classmethod
+    def validate_int_index(cls, item: int, offset: int, length: int, pin_bar: GPIOPinBar, **_):
+        if not offset <= item < offset + length:
+            raise IndexError(f'index out of range for {PinAddressing.__name__}.{str(pin_bar.addressing)}')
+
+    @classmethod
+    def validate_slice_index(cls, item: slice, **_):
+        if (
+                (item.start is not None and not isinstance(item.start, int)) or
+                (item.stop is not None and not isinstance(item.stop, int)) or
+                (item.step is not None and not isinstance(item.step, int))
+        ):
+            raise TypeError(f'slice indices must be integers or None or have an __index__ method')
+
+    @classmethod
+    def validate_list_index(cls, item: list, offset: int, length: int, pin_bar: GPIOPinBar, **_):
+        for i, index in enumerate(item):
+            if isinstance(index, int):
+                try:
+                    cls.validate_int_index(index, offset, length, pin_bar)
+                except IndexError:
+                    raise IndexError(
+                        f'index out of range for {PinAddressing.__name__}.{str(pin_bar.addressing)} at position {i}'
+                    ) from None
+            else:
+                raise TypeError(f'list indices must be integers or have an __index__ method. '
+                                f'Found type {type(index).__name__} at position {i}')
+
+
+class ValueValidator(ABC):
+    """
+    Abstract base class to validate values set for the gpio pin attributes.
+    """
+
+    @classmethod
+    def _validation_mapping(cls):
+        """ Gets the validation method for each index type. """
+        return {
+            int: cls._validate_for_int_index,
+            slice: cls._validate_for_slice_index,
+            list: cls._validate_for_list_index,
+        }
+
+    @classmethod
+    def validate(cls, value, index_type, considered_pins: List[_Pin]):
+        """
+        Validates both type and value of the given value.
+        :param value: The value to validate.
+        :param index_type: The index type used to address the list.
+        :param considered_pins: A list of the considered pins of the current operation.
+        """
+        cls._validate_type(type(value))
+
+        validation_func = cls._validation_mapping()[index_type]
+        if validation_func is not None:
+            # noinspection PyArgumentList
+            validation_func(value=value, considered_pins=considered_pins)
+
+    @classmethod
+    @abstractmethod
+    def _validate_type(cls, value_type):
+        """ Validates the type of the value. """
+        pass
+
+    @classmethod
+    def _validate_for_int_index(cls, value, **_):
+        """ Validates the value for an int index. """
+        if isinstance(value, list):
+            raise ValueError('setting an array element with a sequence.')
+
+    @classmethod
+    def _validate_for_slice_index(cls, value, considered_pins: List[_Pin], **_):
+        """ Validates the value for a slice index. """
+        if isinstance(value, list):
+            cls._validate_list_size(considered_pins, value)
+            cls._validate_list_entries(value, considered_pins, none_allowed=True)
+
+    @classmethod
+    def _validate_for_list_index(cls, value, considered_pins: List[_Pin], **_):
+        """ Validates the value for a list index. """
+        if isinstance(value, list):
+            cls._validate_list_size(considered_pins, value)
+            cls._validate_list_entries(value, considered_pins, none_allowed=False)
+
+    @classmethod
+    def _validate_list_size(cls, considered_pins, value):
+        """ Validates that the number of values and the number of considered pins are the same. """
+        if len(value) is not len(considered_pins):
+            raise ValueError(
+                f'could not broadcast input array from size {len(value)} into size {len(considered_pins)}')
+
+    @classmethod
+    def _validate_list_entries(cls, value, considered_pins: List[_Pin], none_allowed: bool) -> None:
+        """
+        Validates that the value list entries are valid for each individual pin type of the
+        considered pins.
+        :param value: The list of values to validate.
+        :param considered_pins: The considered pins by this operation.
+        :param none_allowed: If None values are allowed or not.
+        """
+        value_pin_zip = zip(value, considered_pins)
+        allowed_entry_types = cls._allowed_list_entry_types()
+        if none_allowed:
+            allowed_entry_types.append(NoneType)
+
+        for i, (v, pin) in enumerate(value_pin_zip):
+            if type(v) not in allowed_entry_types:
+                allowed_entry_type_names = [i.__name__ for i in allowed_entry_types]
+                msg = (f'list value must be of type {", ".join(allowed_entry_type_names)}. '
+                       f'Found type {type(v).__name__} at position {i}')
+                raise ValueError(msg)
+
+            if (v is None and isinstance(pin, _GPIOPin)) or (v is not None and not isinstance(pin, _GPIOPin)):
+                msg = f'unable to assign {v} at position {i} to pin of type {pin.type}'
+                raise PinTypeError(msg)
+
+    @classmethod
+    @abstractmethod
+    def _allowed_list_entry_types(cls) -> List:
+        """ Gets a list of the allowed data types when the value to validate is a list. """
+        pass
+
+
+class ModeValueValidator(ValueValidator):
+    """ The value validator when setting new gpio pin mode(s). """
+
+    @classmethod
+    def _validate_type(cls, value_type):
+        if value_type not in [GPIOPinMode, list]:
+            raise TypeError(f'value must be {GPIOPinMode.__name__} or list, not {value_type.__name__}')
+
+    @classmethod
+    def _allowed_list_entry_types(cls) -> List:
+        return [GPIOPinMode]
+
+
+class StateValueValidator(ValueValidator):
+    """ The value validator when setting new gpio pin state(s). """
+
+    @classmethod
+    def _validate_type(cls, value_type):
+        if value_type not in [GPIOPinState, list]:
+            raise TypeError(f'value must be {GPIOPinState.__name__} or list, not {value_type.__name__}')
+
+    @classmethod
+    def _validate_list_entries(cls, value, considered_pins: List[_Pin], none_allowed: bool):
+        value_pin_zip = zip(value, considered_pins)
+        allowed_entry_types = cls._allowed_list_entry_types()
+        if none_allowed:
+            allowed_entry_types.append(NoneType)
+
+        for i, (v, pin) in enumerate(value_pin_zip):
+            if type(v) not in allowed_entry_types:
+                allowed_entry_type_names = [i.__name__ for i in allowed_entry_types]
+                msg = (f'list value must be of type {", ".join(allowed_entry_type_names)}. '
+                       f'Found type {type(v).__name__} at position {i}')
+                raise ValueError(msg)
+
+            '''
+            v: GPIOPinState, pin: NoGPIO => PinTypeError
+            v: GPIOPinState, pin: GPIO, mode: off => ModeIsOffError
+            v: GPIOPinState, pin: GPIO, mode: on => NoError
+            v: None, pin: NoGPIO => NoError
+            v: None, pin: GPIO, mode: off => NoError
+            v: None, pin: GPIO, mode: on => ValueError
+            '''
+
+            msg = f'unable to assign {v} at position {i} to pin of type {pin.type}'
+            msg = f'{msg} with {pin.mode}' if isinstance(pin, _GPIOPin) else msg
+
+            if v is not None and not isinstance(pin, _GPIOPin):
+                raise PinTypeError(msg)
+            elif v is not None and isinstance(pin, _GPIOPin) and pin.mode is GPIOPinMode.OFF:
+                raise ModeIsOffError(msg)
+            elif v is None and isinstance(pin, _GPIOPin) and pin.mode is not GPIOPinMode.OFF:
+                raise ValueError(msg)
+
+    @classmethod
+    def _allowed_list_entry_types(cls) -> List:
+        return [GPIOPinState]
 
 
 class GPIOPinBarEmulator(GPIOPinBar):
@@ -756,10 +765,10 @@ class GPIOPinBarEmulator(GPIOPinBar):
         )
         self._gpio_states: List[Optional[GPIOPinState]] = [None for _ in self._gpio_pins]
 
-    def _change_pin_modes(self, pins: List[_GPIOPin], new_modes_iterator: Iterator[GPIOPinMode]):
+    def _change_pin_modes(self, pins: List[_GPIOPin], new_modes: List[GPIOPinMode]):
         offset = self.gpio_idx_offset
-        for pin in pins:
-            pin.mode = next(new_modes_iterator)
+        for pin, new_mode in zip(pins, new_modes):
+            pin.mode = new_mode
             current_state = self._gpio_states[pin.gpio_idx - offset]
 
             if pin.mode is GPIOPinMode.OFF:
