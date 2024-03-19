@@ -31,7 +31,6 @@ def install_requires():
 def install_extras_require():
     extra_requires = {
         'raspi': ['RPi.GPIO~=0.7.1'],
-        'testing': ['pytest', 'parameterized'],
     }
 
     all_extra_deps = []
@@ -56,7 +55,7 @@ setup(
     python_requires=">=3.11",
     install_requires=install_requires(),
     extras_require=install_extras_require(),
-    packages=find_packages(),
+    packages=find_packages(exclude=['gpiowrapperTests*']),
     include_package_data=True,
     data_files=data_files(),
     classifiers=[

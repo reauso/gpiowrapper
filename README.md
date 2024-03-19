@@ -24,7 +24,6 @@ This is the list of current extra dependencies:
 | Name      | Description                                                            |
 |-----------|------------------------------------------------------------------------|
 | `raspi`   | Adds dependencies that enable the usage of the raspberry pi gpio pins. |
-| `testing` | Adds dependencies for running tests.                                   |
 | `all`     | Installs all dependencies from all extras.                             |
 
 To install gpiowrapper with extra dependencies use this command with pip:
