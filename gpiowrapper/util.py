@@ -1,5 +1,6 @@
 import sys
 from functools import wraps
+from inspect import isclass, isfunction
 
 
 class IndexableProperty:
@@ -168,11 +169,17 @@ class RequiresOptionalImport:
         self._reference_name_to_check = as_ if as_ is not None else self._reference_name_to_check
         self._msg = f"Unresolved reference '{self._reference_name_to_check}'" if msg is None else msg
 
-    def __call__(self, func):
+    def __call__(self, code):
         """
         :return: Returns a wrapper for a given function.
         """
-        return self._func_wrapper(func)
+        if isfunction(code):
+            return self._func_wrapper(code)
+
+        elif isclass(code):
+            return self._class_wrapper(code)
+
+        raise TypeError(f"argument 'code' must be function or class, not {type(code).__name__}")
 
     def _func_wrapper(self, func):
         @wraps(func)
@@ -189,6 +196,13 @@ class RequiresOptionalImport:
             return func(*args, **kwargs)
 
         return wrapper
+
+    def _class_wrapper(self, cls):
+        for key, value in cls.__dict__.items():
+            if isfunction(value):
+                setattr(cls, key, self._func_wrapper(value))
+
+        return cls
 
 
 def replace_none_in_slice(item: slice) -> slice:
