@@ -717,7 +717,8 @@ class GPIOPinBar(PinBar, ABC):
 
     def reset_gpio_pins(self) -> None:
         """ Resets all pin modes of this pin bar. """
-        self.modes[:] = GPIOPinMode.OFF
+        value_it = iter(lambda: GPIOPinMode.OFF, -1)
+        self._change_pin_modes(self._gpio_pins, value_it)
 
 
 class GPIOPinBarEmulator(GPIOPinBar):
