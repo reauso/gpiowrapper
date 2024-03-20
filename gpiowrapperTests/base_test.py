@@ -5,8 +5,8 @@ from unittest.mock import patch, MagicMock, call
 from parameterized import parameterized
 
 from gpiowrapper import GPIOPinState, GPIOPinMode, PinAddressing, PinType, GPIOPinBarEmulator
-from gpiowrapper.base import PinBar, Pin, GPIOPin, GPIOPinBar, ModeIsOffError, PinTypeError, \
-    PinBarError, ModeValueValidator, IndexValidator, StateValueValidator
+from gpiowrapper.base import PinBar, Pin, GPIOPin, GPIOPinBar, ModeValueValidator, IndexValidator, StateValueValidator
+from gpiowrapper.errors import PinBarError, PinTypeError, ModeIsOffError
 from gpiowrapperTests.useful_test_util import ExtendedTestCase
 
 
