@@ -10,7 +10,7 @@ The simplest way to install the gpiowrapper library is to install from pypi via
 ```bash
 pip install gpiowrapper
 ```
-But you can also install from the github repo instead.
+But you can also install from the gitHub repo instead.
 ```bash
 pip install git+https://github.com/reauso/gpiowrapper.git@latest
 ```
