@@ -76,10 +76,25 @@ if __name__ == "__main__":
 
 ## Currently pre supported libraries and boards
 
-| Library  | Board / Pin Bar            | Wrapper Class Name | Extra Dependencies |
+| Library  | Board / Pin Bar            | Wrapper Class Name | Extra Dependencies | 
 |----------|----------------------------|--------------------|--------------------|
 | RPi.GPIO | _custom pin bar layout_    | RPiGPIOPinBar      | raspi              |
 | RPi.GPIO | Raspberry Pi 40 Pin Header | Raspi40PinBarRPi   | raspi              |
+
+You can use the `GPIOPinBarFactory` class to simply create an instance of the GPIOPinBar you need.
+Each library and board supported has a corresponding `LibraryType` and `BoardType`.
+To create a pin bar instance with _custom pin bar layout_ you can set `None` as `BoardType` parameter.
+
+```python
+from gpiowrapper import GPIOPinBarFactory, LibraryType, BoardType, PinAddressing
+
+if __name__ == "__main__":
+    bar = GPIOPinBarFactory.new_pin_bar_instance(
+        library=LibraryType.RPi_GPIO,
+        board=BoardType.Raspi_40_pin_header,
+        initial_addressing=PinAddressing.PinBar
+    )
+```
 
 ## Setting up custom pin bar wrappers
 
